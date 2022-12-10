@@ -134,9 +134,14 @@ export const getModuleDetails = async (
             ? false
             : true;
 
+        const isExpired =
+          Math.floor(Date.now() / 1000) >=
+          Number(event.args?.expirationTimestamp);
+
         return {
           ...result,
           isDisputed: isDisputed,
+          isExpired: isExpired,
           settled: result.settled,
           resolvedPrice: result.resolvedPrice
         };
