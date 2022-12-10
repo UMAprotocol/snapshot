@@ -139,7 +139,8 @@ const updateDetails = async () => {
     questionDetails.value = await plugin.getExecutionDetails(
       props.network,
       props.umaAddress,
-      props.proposal.id
+      props.proposal.id,
+      getTransactions()
     );
     if (questionDetails.value.questionId && getInstance().web3) {
       bondData.value = await plugin.loadClaimBondData(

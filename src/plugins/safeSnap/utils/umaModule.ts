@@ -1,10 +1,14 @@
 import { ref } from 'vue';
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { multicall } from '@snapshot-labs/snapshot.js/src/utils';
-import { UMA_MODULE_ABI, ERC20_ABI } from '../constants';
+import { UMA_MODULE_ABI, ERC20_ABI, UMA_ORACLE_ABI } from '../constants';
 import { Contract } from '@ethersproject/contracts';
 import { BigNumber } from '@ethersproject/bignumber';
 import { useWeb3 } from '@/composables';
+import { keccak256 } from '@ethersproject/keccak256';
+import { pack } from '@ethersproject/solidity';
+import { defaultAbiCoder } from '@ethersproject/abi';
+import { toUtf8Bytes } from '@ethersproject/strings';
 
 const getBondDetails = async (
   provider: StaticJsonRpcProvider,
@@ -46,7 +50,8 @@ const getBondDetails = async (
 export const getModuleDetails = async (
   provider: StaticJsonRpcProvider,
   network: string,
-  moduleAddress: string
+  moduleAddress: string,
+  transactions: any
 ): Promise<{
   dao: string;
   oracle: string;
@@ -68,16 +73,98 @@ export const getModuleDetails = async (
     [moduleAddress, 'liveness']
   ]);
   // NOTE: Need to get questionId, finalizedAt, isApproved
+  let needsApproval = false;
+  const minimumBond = moduleDetails[3][0];
+  const optimisticOracle = moduleDetails[1][0];
+
   const bondDetails = await getBondDetails(provider, moduleAddress);
 
-  const minimumBond = moduleDetails[3][0];
-  let needsApproval = false;
   if (
     Number(minimumBond) > 0 &&
     Number(minimumBond) > Number(bondDetails.currentUserBondAllowance)
   ) {
     needsApproval = true;
   }
+
+  // Create ancillary data for proposal hash
+  let ancillaryData = '';
+  if (transactions !== undefined) {
+    const transactionsHash = keccak256(
+      defaultAbiCoder.encode(
+        ['(address to, uint8 operation, uint256 value, bytes data)[]'],
+        [transactions]
+      )
+    );
+
+    ancillaryData = pack(
+      ['string', 'bytes', 'bytes'],
+      [
+        '',
+        pack(['string', 'string'], ['proposalHash', ':']),
+        toUtf8Bytes(transactionsHash.replace('0x', ''))
+      ]
+    );
+  }
+
+  // Search for requests with matching ancillary data
+  const oracleContract = new Contract(
+    optimisticOracle,
+    UMA_ORACLE_ABI,
+    provider
+  );
+  const events = await oracleContract.queryFilter('ProposePrice', -10000);
+  const proposeEvent = events.filter(
+    event =>
+      event.args?.requester === moduleAddress &&
+      event.args?.ancillaryData === ancillaryData
+  );
+
+  // Get the full request (with state and disputer)
+  const requestState = proposeEvent.map(async event => {
+    return await oracleContract
+      .getRequest(
+        event.args?.requester,
+        event.args?.identifier,
+        event.args?.timestamp,
+        event.args?.ancillaryData
+      )
+      .then(result => {
+        const isDisputed =
+          result.disputer === '0x0000000000000000000000000000000000000000'
+            ? false
+            : true;
+
+        return {
+          ...result,
+          isDisputed: isDisputed,
+          settled: result.settled,
+          resolvedPrice: result.resolvedPrice
+        };
+      });
+  });
+
+  /*:
+   Create bool for isDisputed:
+   - if disputed, button that deletes it to propose again
+   - if resolved, delete
+   - if settled and value for proposal hash !== 0 && there is a disputer address in the request, we can delete
+ */
+
+  /*:
+  Logic if settled:
+  - if settled && no disputer, you can execute
+  - if expired, allow to execute
+ */
+
+  /*:
+  Logic if proposed and not expired:
+  - show the timestamp of when it can be executed
+  - expirationTimestamp (proposal timestamp + liveness)
+ */
+
+  // If proposed, no button available
+
+  // If executed, let the user know it's already been executed (instead of proposing again)
 
   return {
     dao: moduleDetails[0][0],
