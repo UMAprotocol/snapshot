@@ -88,6 +88,7 @@ export const getModuleDetails = async (
 
   // Create ancillary data for proposal hash
   let ancillaryData = '';
+  let timestamp = 0;
   if (transactions !== undefined) {
     const transactionsHash = keccak256(
       defaultAbiCoder.encode(
@@ -104,6 +105,12 @@ export const getModuleDetails = async (
         toUtf8Bytes(transactionsHash.replace('0x', ''))
       ]
     );
+    const moduleContract = new Contract(
+      moduleAddress,
+      UMA_MODULE_ABI,
+      provider
+    );
+    timestamp = await moduleContract.proposalHashes(transactionsHash);
   }
 
   // Search for requests with matching ancillary data
@@ -112,11 +119,12 @@ export const getModuleDetails = async (
     UMA_ORACLE_ABI,
     provider
   );
-  const events = await oracleContract.queryFilter('ProposePrice', -10000);
+  const events = await oracleContract.queryFilter('ProposePrice', -100000);
   const proposeEvent = events.filter(
     event =>
       event.args?.requester === moduleAddress &&
-      event.args?.ancillaryData === ancillaryData
+      event.args?.ancillaryData === ancillaryData &&
+      Number(event.args?.timestamp) === Number(timestamp)
   );
 
   // Get the full request (with state and disputer)
