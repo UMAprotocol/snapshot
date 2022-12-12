@@ -64,6 +64,7 @@ export const getModuleDetails = async (
   symbol: string;
   userBalance: BigNumber;
   needsBondApproval: boolean;
+  proposeEvent: any;
 }> => {
   const moduleDetails = await multicall(network, provider, UMA_MODULE_ABI, [
     [moduleAddress, 'avatar'],
@@ -128,56 +129,35 @@ export const getModuleDetails = async (
   );
 
   // Get the full request (with state and disputer)
-  const requestState = proposeEvent.map(async event => {
-    return await oracleContract
-      .getRequest(
-        event.args?.requester,
-        event.args?.identifier,
-        event.args?.timestamp,
-        event.args?.ancillaryData
-      )
-      .then(result => {
-        const isDisputed =
-          result.disputer === '0x0000000000000000000000000000000000000000'
-            ? false
-            : true;
+  const proposalEvent = await Promise.all(
+    proposeEvent.map(async event => {
+      return await oracleContract
+        .getRequest(
+          event.args?.requester,
+          event.args?.identifier,
+          event.args?.timestamp,
+          event.args?.ancillaryData
+        )
+        .then(result => {
+          const isDisputed =
+            result.disputer === '0x0000000000000000000000000000000000000000'
+              ? false
+              : true;
 
-        const isExpired =
-          Math.floor(Date.now() / 1000) >=
-          Number(event.args?.expirationTimestamp);
+          const isExpired =
+            Math.floor(Date.now() / 1000) >=
+            Number(event.args?.expirationTimestamp);
 
-        return {
-          ...result,
-          isDisputed: isDisputed,
-          isExpired: isExpired,
-          settled: result.settled,
-          resolvedPrice: result.resolvedPrice
-        };
-      });
-  });
-
-  /*:
-   Create bool for isDisputed:
-   - if disputed, button that deletes it to propose again
-   - if resolved, delete
-   - if settled and value for proposal hash !== 0 && there is a disputer address in the request, we can delete
- */
-
-  /*:
-  Logic if settled:
-  - if settled && no disputer, you can execute
-  - if expired, allow to execute
- */
-
-  /*:
-  Logic if proposed and not expired:
-  - show the timestamp of when it can be executed
-  - expirationTimestamp (proposal timestamp + liveness)
- */
-
-  // If proposed, no button available
-
-  // If executed, let the user know it's already been executed (instead of proposing again)
+          return {
+            expirationTimestamp: result.expirationTime,
+            isExpired: isExpired,
+            isDisputed: isDisputed,
+            isSettled: result.settled,
+            resolvedPrice: result.resolvedPrice
+          };
+        });
+    })
+  );
 
   return {
     dao: moduleDetails[0][0],
@@ -190,6 +170,7 @@ export const getModuleDetails = async (
     decimals: bondDetails.decimals,
     symbol: bondDetails.symbol,
     userBalance: bondDetails.currentUserBalance,
-    needsBondApproval: needsApproval
+    needsBondApproval: needsApproval,
+    proposeEvent: proposalEvent[0]
   };
 };
