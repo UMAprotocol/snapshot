@@ -194,16 +194,16 @@ const claimBond = async () => {
     );
 
     await ensureRightNetwork(props.network);
-    const clamingBond = plugin.claimBond(
+    const claimingBond = plugin.claimBond(
       getInstance().web3,
       questionDetails.value.oracle,
       questionDetails.value.questionId,
       params
     );
-    await clamingBond.next();
+    await claimingBond.next();
     actionInProgress.value = null;
     pendingCount.value++;
-    await clamingBond.next();
+    await claimingBond.next();
     notify(t('notify.youDidIt'));
     pendingCount.value--;
     await sleep(3e3);
