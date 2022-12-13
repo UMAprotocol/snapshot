@@ -346,13 +346,30 @@ const questionState = computed(() => {
     return QuestionStates.questionNotSet;
 
   const ts = (Date.now() / 1e3).toFixed();
-  const { finalizedAt, cooldown, expiration, executionApproved, nextTxIndex } =
-    questionDetails.value;
+  const {
+    finalizedAt,
+    cooldown,
+    expiration,
+    executionApproved,
+    nextTxIndex,
+    proposalEvent
+  } = questionDetails.value;
 
-  const isExpired = finalizedAt + expiration < ts;
+  // Proposal is approved if it expires without a dispute.
+  if (proposalEvent.isExpired) return QuestionStates.proposalApproved;
 
-  if (!finalizedAt) return QuestionStates.questionNotResolved;
-  // commenting out since it is not relevant for uma execution
+  // Proposal is approved if it has been settled without a disputer.
+  if (proposalEvent.isSettled && !proposalEvent.isDisputed)
+    return QuestionStates.proposalApproved;
+
+  // TODO: Deleting disputed proposals, deleting resolved proposals that have been executed,
+  // allowing re-proposal of disputed proposals.
+
+  // Commenting out the below since it is not relevant for uma execution
+
+  // const isExpired = finalizedAt + expiration < ts;
+
+  // if (!finalizedAt) return QuestionStates.questionNotResolved;
   // if (executionApproved) {
   //   if (finalizedAt + cooldown > ts) return QuestionStates.waitingForCooldown;
 
@@ -362,7 +379,8 @@ const questionState = computed(() => {
 
   //   return QuestionStates.proposalApproved;
   // }
-  if (isExpired) return QuestionStates.proposalRejected;
+
+  // if (isExpired) return QuestionStates.proposalRejected;
 
   return QuestionStates.error;
 });
