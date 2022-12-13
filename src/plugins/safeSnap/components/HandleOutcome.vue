@@ -352,15 +352,16 @@ const questionState = computed(() => {
   const isExpired = finalizedAt + expiration < ts;
 
   if (!finalizedAt) return QuestionStates.questionNotResolved;
-  if (executionApproved) {
-    if (finalizedAt + cooldown > ts) return QuestionStates.waitingForCooldown;
+  // commenting out since it is not relevant for uma execution
+  // if (executionApproved) {
+  //   if (finalizedAt + cooldown > ts) return QuestionStates.waitingForCooldown;
 
-    if (!Number.isInteger(nextTxIndex))
-      return QuestionStates.completelyExecuted;
-    else if (isExpired) return QuestionStates.timeExpired;
+  //   if (!Number.isInteger(nextTxIndex))
+  //     return QuestionStates.completelyExecuted;
+  //   else if (isExpired) return QuestionStates.timeExpired;
 
-    return QuestionStates.proposalApproved;
-  }
+  //   return QuestionStates.proposalApproved;
+  // }
   if (isExpired) return QuestionStates.proposalRejected;
 
   return QuestionStates.error;
