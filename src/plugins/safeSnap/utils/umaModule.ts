@@ -77,7 +77,6 @@ export const getModuleDetails = async (
   let needsApproval = false;
   const minimumBond = moduleDetails[3][0];
   const optimisticOracle = moduleDetails[1][0];
-
   const bondDetails = await getBondDetails(provider, moduleAddress);
 
   if (
