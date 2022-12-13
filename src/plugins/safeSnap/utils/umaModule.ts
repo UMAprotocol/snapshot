@@ -64,7 +64,7 @@ export const getModuleDetails = async (
   symbol: string;
   userBalance: BigNumber;
   needsBondApproval: boolean;
-  proposeEvent: any;
+  proposalEvent: any;
 }> => {
   const moduleDetails = await multicall(network, provider, UMA_MODULE_ABI, [
     [moduleAddress, 'avatar'],
@@ -170,6 +170,6 @@ export const getModuleDetails = async (
     symbol: bondDetails.symbol,
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
-    proposeEvent: proposalEvent[0]
+    proposalEvent: proposalEvent[0]
   };
 };
