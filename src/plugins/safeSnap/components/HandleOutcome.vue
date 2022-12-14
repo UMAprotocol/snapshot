@@ -219,12 +219,6 @@ const submitProposal = async () => {
   actionInProgress.value = 'submit-proposal';
   try {
     await ensureRightNetwork(props.network);
-    // const proposalSubmission = plugin.submitProposalWithHashes(
-    //   getInstance().web3,
-    //   props.umaAddress,
-    //   questionDetails.value.proposalId,
-    //   getTxHashes()
-    // );
     const proposalSubmission = plugin.submitProposal(
       getInstance().web3,
       props.umaAddress,
@@ -290,16 +284,6 @@ const executeProposal = async () => {
 
   try {
     clearBatchError();
-    // const transaction =
-    //   props.batches[questionDetails.value.nextTxIndex].mainTransaction;
-    // const executingProposal = plugin.executeProposalWithHashes(
-    //   getInstance().web3,
-    //   props.umaAddress,
-    //   questionDetails.value.proposalId,
-    //   getTxHashes(),
-    //   transaction,
-    //   questionDetails.value.nextTxIndex
-    // );
     const executingProposal = plugin.executeProposal(
       getInstance().web3,
       props.umaAddress,
@@ -316,7 +300,6 @@ const executeProposal = async () => {
   } catch (err) {
     pendingCount.value--;
     action2InProgress.value = null;
-    // setBatchError(questionDetails.value.nextTxIndex, err.reason);
   }
 };
 
@@ -346,14 +329,7 @@ const questionState = computed(() => {
     return QuestionStates.questionNotSet;
 
   const ts = (Date.now() / 1e3).toFixed();
-  const {
-    finalizedAt,
-    cooldown,
-    expiration,
-    executionApproved,
-    nextTxIndex,
-    proposalEvent
-  } = questionDetails.value;
+  const { proposalEvent } = questionDetails.value;
 
   // Proposal is approved if it expires without a dispute.
   if (proposalEvent.isExpired) return QuestionStates.proposalApproved;
@@ -363,24 +339,6 @@ const questionState = computed(() => {
     return QuestionStates.proposalApproved;
 
   // TODO: Deleting disputed proposals, deleting resolved proposals that have been executed,
-  // allowing re-proposal of disputed proposals.
-
-  // Commenting out the below since it is not relevant for uma execution
-
-  // const isExpired = finalizedAt + expiration < ts;
-
-  // if (!finalizedAt) return QuestionStates.questionNotResolved;
-  // if (executionApproved) {
-  //   if (finalizedAt + cooldown > ts) return QuestionStates.waitingForCooldown;
-
-  //   if (!Number.isInteger(nextTxIndex))
-  //     return QuestionStates.completelyExecuted;
-  //   else if (isExpired) return QuestionStates.timeExpired;
-
-  //   return QuestionStates.proposalApproved;
-  // }
-
-  // if (isExpired) return QuestionStates.proposalRejected;
 
   return QuestionStates.error;
 });
