@@ -129,8 +129,8 @@ export const getModuleDetails = async (
 
   // Get the full request (with state and disputer)
   const proposalEvent = await Promise.all(
-    proposeEvent.map(async event => {
-      return await oracleContract
+    proposeEvent.map(event => {
+      return oracleContract
         .getRequest(
           event.args?.requester,
           event.args?.identifier,
