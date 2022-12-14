@@ -338,7 +338,15 @@ const questionState = computed(() => {
   if (proposalEvent.isSettled && !proposalEvent.isDisputed)
     return QuestionStates.proposalApproved;
 
-  // TODO: Deleting disputed proposals, deleting resolved proposals that have been executed,
+  // Proposal can be re-proposed if it has been disputed but not resolved.
+  if (proposalEvent.isDisputed && !proposalEvent.resolvedPrice)
+    return QuestionStates.waitingForQuestion;
+
+  // Proposal can be deleted if it has been rejected.
+  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
+    return QuestionStates.proposalRejected;
+
+  // Proposal can be deleted if it has been executed.
 
   return QuestionStates.error;
 });
