@@ -119,6 +119,8 @@ export const getModuleDetails = async (
     UMA_ORACLE_ABI,
     provider
   );
+
+  // TODO: Customize this block lookback based on chain and test with L2 network (Polygon)
   const events = await oracleContract.queryFilter('ProposePrice', -100000);
   const proposeEvent = events.filter(
     event =>
