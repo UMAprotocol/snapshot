@@ -10,6 +10,7 @@ import { getIpfsUrl, shorten } from '@/helpers/utils';
 
 import SafeSnapTooltip from './Tooltip.vue';
 import SafeSnapHandleOutcome from './HandleOutcome.vue';
+import SafeSnapHandleOutcomeReality from './HandleOutcomeReality.vue';
 import SafeSnapFormImportTransactionsButton from './Form/ImportTransactionsButton.vue';
 import SafeSnapFormTransactionBatch from './Form/TransactionBatch.vue';
 
@@ -43,13 +44,13 @@ async function fetchCollectibles(network, gnosisSafeAddress) {
   return [];
 }
 
-function formatBatches(network, umaModule, batches, multiSend) {
+function formatBatches(network, module, batches, multiSend) {
   if (batches.length) {
     const batchSample = batches[0];
     if (Array.isArray(batchSample)) {
       const chainId = parseInt(network);
       return batches.map((txs, index) =>
-        createBatch(umaModule, chainId, index, txs, multiSend)
+        createBatch(module, chainId, index, txs, multiSend)
       );
     }
   }
@@ -60,6 +61,7 @@ export default {
   components: {
     SafeSnapTooltip,
     SafeSnapFormImportTransactionsButton,
+    SafeSnapHandleOutcomeReality,
     SafeSnapHandleOutcome,
     SafeSnapFormTransactionBatch
   },
@@ -67,7 +69,7 @@ export default {
     'modelValue',
     'proposal',
     'network',
-    'umaAddress',
+    'moduleAddress',
     'multiSendAddress',
     'preview',
     'hash'
@@ -80,16 +82,17 @@ export default {
     return {
       input: formatBatches(
         this.network,
-        this.umaAddress,
+        this.moduleAddress,
         this.modelValue,
         this.multiSendAddress
       ),
       gnosisSafeAddress: undefined,
+      moduleType: undefined,
       showHash: false,
       transactionConfig: {
         preview: this.preview,
         gnosisSafeAddress: undefined,
-        umaAddress: this.umaAddress,
+        moduleAddress: this.moduleAddress,
         network: this.network,
         multiSendAddress: this.multiSendAddress,
         tokens: [],
@@ -118,11 +121,20 @@ export default {
   },
   async mounted() {
     try {
-      const { dao } = await plugin.getModuleDetails(
+      const moduleType = await plugin.getModuleType(
         this.network,
-        this.umaAddress
+        this.moduleAddress
       );
+
+      const { dao } =
+        moduleType === 'reality'
+          ? await plugin.getModuleDetailsReality(
+              this.network,
+              this.moduleAddress
+            )
+          : await plugin.getModuleDetailsUma(this.network, this.moduleAddress);
       this.gnosisSafeAddress = dao;
+      this.moduleType = moduleType;
       this.transactionConfig = {
         ...this.transactionConfig,
         gnosisSafeAddress: this.gnosisSafeAddress,
@@ -140,7 +152,7 @@ export default {
     addTransactionBatch() {
       this.input.push(
         createBatch(
-          this.umaAddress,
+          this.moduleAddress,
           parseInt(this.network),
           this.input.length,
           [],
@@ -160,7 +172,7 @@ export default {
     handleImport(txs) {
       this.input.push(
         createBatch(
-          this.umaAddress,
+          this.moduleAddress,
           parseInt(this.network),
           this.input.length,
           txs,
@@ -191,7 +203,7 @@ export default {
       </a>
       <div class="flex-grow"></div>
       <SafeSnapTooltip
-        :uma-address="umaAddress"
+        :module-address="moduleAddress"
         :multi-send-address="multiSendAddress"
       />
     </h4>
@@ -232,11 +244,20 @@ export default {
           @import="handleImport($event)"
         />
 
-        <SafeSnapHandleOutcome
-          v-if="preview && proposalResolved"
+        <SafeSnapHandleOutcomeReality
+          v-if="preview && proposalResolved && moduleType === 'reality'"
           :batches="input"
           :proposal="proposal"
-          :uma-address="umaAddress"
+          :module-address="moduleAddress"
+          :multi-send-address="transactionConfig.multiSendAddress"
+          :network="transactionConfig.network"
+        />
+
+        <SafeSnapHandleOutcome
+          v-if="preview && proposalResolved && moduleType === 'uma'"
+          :batches="input"
+          :proposal="proposal"
+          :module-address="moduleAddress"
           :multi-send-address="transactionConfig.multiSendAddress"
           :network="transactionConfig.network"
         />
