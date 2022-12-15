@@ -141,6 +141,23 @@ export default class Plugin {
     return getModuleDetailsReality(provider, network, moduleAddress);
   }
 
+  async getModuleType(network: string, moduleAddress: string) {
+    const provider: StaticJsonRpcProvider = getProvider(network);
+    const moduleContract = new Contract(
+      moduleAddress,
+      UMA_MODULE_ABI,
+      provider
+    );
+
+    let rules;
+    try {
+      rules = await moduleContract.rules();
+    } catch {
+      rules = undefined;
+    }
+    return rules !== undefined ? 'uma' : 'reality';
+  }
+
   async getExecutionDetails(
     network: string,
     moduleAddress: string,
