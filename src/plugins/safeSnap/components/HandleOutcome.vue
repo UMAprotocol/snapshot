@@ -28,7 +28,7 @@ const props = defineProps([
   'batches',
   'proposal',
   'network',
-  'umaAddress',
+  'moduleAddress',
   'multiSendAddress'
 ]);
 
@@ -119,7 +119,7 @@ const updateDetails = async () => {
   try {
     questionDetails.value = await plugin.getExecutionDetails(
       props.network,
-      props.umaAddress,
+      props.moduleAddress,
       props.proposal.id,
       getTransactions()
     );
@@ -140,7 +140,7 @@ const approveBond = async () => {
     const approveBond = await plugin.approveBond(
       props.network,
       getInstance().web3,
-      props.umaAddress
+      props.moduleAddress
     );
     await approveBond.next();
     actionInProgress.value = null;
@@ -163,7 +163,7 @@ const submitProposal = async () => {
     await ensureRightNetwork(props.network);
     const proposalSubmission = plugin.submitProposal(
       getInstance().web3,
-      props.umaAddress,
+      props.moduleAddress,
       getTransactions()
     );
     await proposalSubmission.next();
@@ -196,7 +196,7 @@ const executeProposal = async () => {
     clearBatchError();
     const executingProposal = plugin.executeProposal(
       getInstance().web3,
-      props.umaAddress,
+      props.moduleAddress,
       getTransactions()
     );
     await executingProposal.next();
