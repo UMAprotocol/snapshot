@@ -266,7 +266,7 @@ export interface SafeExecutionData {
   hash: string | null;
   txs: SafeModuleTransactionBatch[];
   network: string;
-  umaModule: string;
+  module: string;
 }
 
 export interface Plugin {

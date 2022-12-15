@@ -9,7 +9,7 @@
       "safes": [
         {
           "network": "CHAIN_ID",
-          "umaAddress": "0xSWITCH_WITH_UMA_MODULE_ADDRESS"
+          "moduleAddress": "0xSWITCH_WITH_MODULE_ADDRESS"
         }
       ]
     },
@@ -17,7 +17,7 @@
       "safes": [
         {
           "network": "CHAIN_ID",
-          "umaAddress": "0xSWITCH_WITH_UMA_MODULE_ADDRESS"
+          "moduleAddress": "0xSWITCH_WITH_MODULE_ADDRESS"
         }
       ]
     }
