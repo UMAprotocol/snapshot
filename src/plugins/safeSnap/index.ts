@@ -141,7 +141,7 @@ export default class Plugin {
     return getModuleDetailsReality(provider, network, moduleAddress);
   }
 
-  async getModuleType(network: string, moduleAddress: string) {
+  async validateUmaModule(network: string, moduleAddress: string) {
     const provider: StaticJsonRpcProvider = getProvider(network);
     const moduleContract = new Contract(
       moduleAddress,
