@@ -69,7 +69,8 @@ export default {
     'modelValue',
     'proposal',
     'network',
-    'moduleAddress',
+    'realityAddress',
+    'umaAddress',
     'multiSendAddress',
     'preview',
     'hash'
@@ -82,17 +83,20 @@ export default {
     return {
       input: formatBatches(
         this.network,
-        this.moduleAddress,
+        this.realityAddress,
         this.modelValue,
         this.multiSendAddress
       ),
       gnosisSafeAddress: undefined,
       moduleType: undefined,
+      moduleAddress: undefined,
+      moduleTypeReady: false,
       showHash: false,
       transactionConfig: {
         preview: this.preview,
         gnosisSafeAddress: undefined,
-        moduleAddress: this.moduleAddress,
+        realityAddress: this.realityAddress,
+        umaAddress: this.umaAddress,
         network: this.network,
         multiSendAddress: this.multiSendAddress,
         tokens: [],
@@ -121,20 +125,26 @@ export default {
   },
   async mounted() {
     try {
-      const moduleType = await plugin.getModuleType(
+      const moduleType = await plugin.validateUmaModule(
         this.network,
-        this.moduleAddress
+        this.umaAddress
       );
 
       const { dao } =
         moduleType === 'reality'
           ? await plugin.getModuleDetailsReality(
               this.network,
-              this.moduleAddress
+              this.realityAddress
             )
-          : await plugin.getModuleDetailsUma(this.network, this.moduleAddress);
-      this.gnosisSafeAddress = dao;
+          : await plugin.getModuleDetailsUma(this.network, this.umaAddress);
+
+      const moduleAddress =
+        moduleType === 'reality' ? this.realityAddress : this.umaAddress;
+
       this.moduleType = moduleType;
+      this.moduleAddress = moduleAddress;
+      this.moduleTypeReady = true;
+      this.gnosisSafeAddress = dao;
       this.transactionConfig = {
         ...this.transactionConfig,
         gnosisSafeAddress: this.gnosisSafeAddress,
@@ -203,8 +213,10 @@ export default {
       </a>
       <div class="flex-grow"></div>
       <SafeSnapTooltip
+        v-if="moduleTypeReady"
         :module-address="moduleAddress"
         :multi-send-address="multiSendAddress"
+        :module-type="moduleType"
       />
     </h4>
     <UiCollapsibleText
@@ -245,10 +257,15 @@ export default {
         />
 
         <SafeSnapHandleOutcomeReality
-          v-if="preview && proposalResolved && moduleType === 'reality'"
+          v-if="
+            preview &&
+            proposalResolved &&
+            moduleType === 'reality' &&
+            moduleTypeReady
+          "
           :batches="input"
           :proposal="proposal"
-          :module-address="moduleAddress"
+          :reality-address="transactionConfig.realityAddress"
           :multi-send-address="transactionConfig.multiSendAddress"
           :network="transactionConfig.network"
         />
@@ -257,7 +274,7 @@ export default {
           v-if="preview && proposalResolved && moduleType === 'uma'"
           :batches="input"
           :proposal="proposal"
-          :module-address="moduleAddress"
+          :uma-address="transactionConfig.umaAddress"
           :multi-send-address="transactionConfig.multiSendAddress"
           :network="transactionConfig.network"
         />
