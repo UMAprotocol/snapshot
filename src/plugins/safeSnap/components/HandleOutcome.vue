@@ -116,7 +116,6 @@ const getTransactions = () => {
 const updateDetails = async () => {
   loading.value = true;
   try {
-    console.log('transactions:', getTransactions());
     questionDetails.value = await plugin.getExecutionDetails(
       props.network,
       props.umaAddress,
@@ -233,7 +232,7 @@ const questionState = computed(() => {
   if (!questionDetails.value) return QuestionStates.error;
 
   const ts = (Date.now() / 1e3).toFixed();
-  const { proposalEvent } = questionDetails.value;
+  const { proposalEvent, proposalExecuted } = questionDetails.value;
 
   // Proposal can be made if it has not been made already.
   if (!proposalEvent) return QuestionStates.waitingForProposal;
@@ -243,26 +242,22 @@ const questionState = computed(() => {
     return QuestionStates.proposalApproved;
 
   // Proposal is approved if it has been settled without a disputer and hasn't been executed.
-  if (
-    proposalEvent.isSettled &&
-    !proposalEvent.isDisputed /* && has not been executed */
-  )
+  if (proposalEvent.isSettled && !proposalEvent.isDisputed && !proposalExecuted)
     return QuestionStates.proposalApproved;
 
   // Proposal can not be re-proposed if it has been executed.
-  if (proposalEvent.isSettled /* && has been executed */)
+  if (proposalEvent.isSettled && proposalExecuted)
     return QuestionStates.completelyExecuted;
 
   // Proposal can be re-proposed if it has been disputed but not resolved.
   if (proposalEvent.isDisputed && !proposalEvent.resolvedPrice)
-    return QuestionStates.waitingForProposal;
-  // question: does this create new proposal event?
-  // you can do two proposals with duplicate transactions at different times, will they
-  // have different question ids?
+    return QuestionStates.disputedButNotResolved;
+  // TODO: Allow user to delete proposal and re-propose.
 
   // Proposal can be deleted if it has been rejected.
   if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
     return QuestionStates.proposalRejected;
+  // TODO: Allow user to delete proposal but do not show option to re-propose.
 
   return QuestionStates.error;
 });
