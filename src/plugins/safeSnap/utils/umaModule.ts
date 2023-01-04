@@ -90,9 +90,9 @@ export const getModuleDetails = async (
   // Create ancillary data for proposal hash
   let ancillaryData = '';
   let timestamp = 0;
-  let transactionsHash;
+  let proposalHash;
   if (transactions !== undefined) {
-    transactionsHash = keccak256(
+    proposalHash = keccak256(
       defaultAbiCoder.encode(
         ['(address to, uint8 operation, uint256 value, bytes data)[]'],
         [transactions]
@@ -104,10 +104,10 @@ export const getModuleDetails = async (
       [
         '',
         pack(['string', 'string'], ['proposalHash', ':']),
-        toUtf8Bytes(transactionsHash.replace('0x', ''))
+        toUtf8Bytes(proposalHash.replace('0x', ''))
       ]
     );
-    timestamp = await moduleContract.proposalHashes(transactionsHash);
+    timestamp = await moduleContract.proposalHashes(proposalHash);
   }
 
   // Search for requests with matching ancillary data
@@ -147,11 +147,12 @@ export const getModuleDetails = async (
             Number(event.args?.expirationTimestamp);
 
           return {
-            expirationTimestamp: result.expirationTime,
+            expirationTimestamp: event.args?.expirationTimestamp,
             isExpired: isExpired,
             isDisputed: isDisputed,
             isSettled: result.settled,
-            resolvedPrice: result.resolvedPrice
+            resolvedPrice: result.resolvedPrice,
+            proposalHash: proposalHash
           };
         });
     })
@@ -164,9 +165,10 @@ export const getModuleDetails = async (
     'TransactionExecuted'
   );
   const thisProposalExecutionEvents = executionEvents.filter(
-    event => event.args?.proposalHash === transactionsHash
+    event => event.args?.proposalHash === proposalHash
   );
-  if (thisProposalExecutionEvents) proposalExecuted = true;
+  if (thisProposalExecutionEvents && thisProposalExecutionEvents.length > 0)
+    proposalExecuted = true;
 
   return {
     dao: moduleDetails[0][0],

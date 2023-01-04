@@ -39,11 +39,12 @@ const QuestionStates = {
   noWalletConnection: 0,
   loading: 1,
   waitingForProposal: 2,
-  proposalApproved: 3,
-  proposalRejected: 4,
-  completelyExecuted: 5,
-  disputedButNotResolved: 6,
-  disputedResolvedValid: 7
+  waitingForLiveness: 3,
+  proposalApproved: 4,
+  proposalRejected: 5,
+  completelyExecuted: 6,
+  disputedButNotResolved: 7,
+  disputedResolvedValid: 8
 };
 Object.freeze(QuestionStates);
 
@@ -212,6 +213,71 @@ const executeProposal = async () => {
   }
 };
 
+const deleteDisputedProposal = async () => {
+  if (!getInstance().isAuthenticated.value) return;
+  action2InProgress.value = 'delete-disputed-proposal';
+  try {
+    await ensureRightNetwork(props.network);
+  } catch (e) {
+    console.error(e);
+    action2InProgress.value = null;
+    return;
+  }
+
+  try {
+    clearBatchError();
+    const deletingDisputedProposal = plugin.deleteDisputedProposal(
+      getInstance().web3,
+      props.umaAddress,
+      questionDetails.value.proposalEvent.proposalHash
+    );
+    await deletingDisputedProposal.next();
+    action2InProgress.value = null;
+    pendingCount.value++;
+    await deletingDisputedProposal.next();
+    notify(t('notify.youDidIt'));
+    pendingCount.value--;
+    await sleep(3e3);
+    await updateDetails();
+  } catch (err) {
+    pendingCount.value--;
+    action2InProgress.value = null;
+  }
+};
+
+// TODO: Implement button for deleting rejected proposal.
+const deleteRejectedProposal = async () => {
+  if (!getInstance().isAuthenticated.value) return;
+  action2InProgress.value = 'delete-rejected-proposal';
+  try {
+    await ensureRightNetwork(props.network);
+  } catch (e) {
+    console.error(e);
+    action2InProgress.value = null;
+    return;
+  }
+
+  try {
+    clearBatchError();
+    const deletingRejectedProposal = plugin.deleteRejectedProposal(
+      getInstance().web3,
+      props.umaAddress,
+      questionDetails.value.proposalEvent.proposalHash
+    );
+    await deletingRejectedProposal.next();
+    action2InProgress.value = null;
+    pendingCount.value++;
+    await deletingRejectedProposal.next();
+    notify(t('notify.youDidIt'));
+    pendingCount.value--;
+    await sleep(3e3);
+    await updateDetails();
+  } catch (err) {
+    pendingCount.value--;
+    action2InProgress.value = null;
+  }
+};
+
 const usingMetaMask = computed(() => {
   return window.ethereum && getInstance().provider.value?.isMetaMask;
 });
@@ -234,8 +300,18 @@ const questionState = computed(() => {
   const ts = (Date.now() / 1e3).toFixed();
   const { proposalEvent, proposalExecuted } = questionDetails.value;
 
+  // If proposal has already been executed, prevents user from proposing again.
+  if (proposalExecuted) return QuestionStates.completelyExecuted;
+
   // Proposal can be made if it has not been made already.
   if (!proposalEvent) return QuestionStates.waitingForProposal;
+
+  // Proposal has been made and is waiting for liveness period to complete.
+  if (!proposalEvent.isExpired && !proposalEvent.isDisputed)
+    return QuestionStates.waitingForLiveness;
+
+  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
+  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
 
   // Proposal is approved if it expires without a dispute and hasn't been settled.
   if (proposalEvent.isExpired && !proposalEvent.isSettled)
@@ -248,11 +324,6 @@ const questionState = computed(() => {
   // Proposal can not be re-proposed if it has been executed.
   if (proposalEvent.isSettled && proposalExecuted)
     return QuestionStates.completelyExecuted;
-
-  // Proposal can be re-proposed if it has been disputed but not resolved.
-  if (proposalEvent.isDisputed && !proposalEvent.resolvedPrice)
-    return QuestionStates.disputedButNotResolved;
-  // TODO: Allow user to delete proposal and re-propose.
 
   // Proposal can be deleted if it has been rejected.
   if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
@@ -310,13 +381,37 @@ onMounted(async () => {
       </BaseButton>
     </div>
 
+    <div
+      v-if="questionState === questionStates.waitingForLiveness"
+      class="flex items-center justify-center self-stretch rounded-lg border p-3 text-skin-link"
+    >
+      <strong>{{
+        'Proposal can be executed at ' +
+        new Date(
+          questionDetails.proposalEvent.expirationTimestamp * 1000
+        ).toLocaleString()
+      }}</strong>
+    </div>
+
+    <div
+      v-if="questionState === questionStates.disputedButNotResolved"
+      class="my-4"
+    >
+      <BaseButton
+        :loading="action2InProgress === 'delete-disputed-proposal'"
+        @click="deleteDisputedProposal"
+      >
+        {{ $t('safeSnap.labels.deleteDisputedProposal') }}
+      </BaseButton>
+    </div>
+
     <div v-if="questionState === questionStates.proposalApproved" class="my-4">
       <BaseButton
         :loading="action2InProgress === 'execute-proposal'"
         @click="executeProposal"
       >
         {{
-          $t('safeSnap.labels.executeTxs', [
+          $t('safeSnap.labels.executeTxsUma', [
             questionDetails.nextTxIndex + 1,
             batches.length
           ])
