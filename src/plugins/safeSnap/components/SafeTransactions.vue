@@ -271,7 +271,12 @@ export default {
         />
 
         <SafeSnapHandleOutcome
-          v-if="preview && proposalResolved && moduleType === 'uma'"
+          v-if="
+            preview &&
+            proposalResolved &&
+            moduleType === 'uma' &&
+            moduleTypeReady
+          "
           :batches="input"
           :proposal="proposal"
           :uma-address="transactionConfig.umaAddress"
