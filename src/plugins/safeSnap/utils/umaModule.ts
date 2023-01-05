@@ -118,10 +118,9 @@ export const getModuleDetails = async (
   );
 
   // TODO: Customize this block lookback based on chain and test with L2 network (Polygon)
-  const proposalEvents = await oracleContract.queryFilter('ProposePrice');
+  const proposalEvents = await oracleContract.queryFilter(oracleContract.filters.ProposePrice(moduleAddress));
   const thisModuleProposalEvents = proposalEvents.filter(
     event =>
-      event.args?.requester === moduleAddress &&
       event.args?.ancillaryData === ancillaryData &&
       Number(event.args?.timestamp) === Number(timestamp)
   );
