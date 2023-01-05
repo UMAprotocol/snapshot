@@ -159,16 +159,8 @@ export const getModuleDetails = async (
 
   // If we add a ProposalExecuted event to the OptimisticGovernor, we could check by both the hash and the timestamp.
   // In its current form, this code will create issues if there are duplicate proposals.
-  let proposalExecuted = false;
-  const executionEvents = await moduleContract.queryFilter(
-    'TransactionExecuted'
-  );
-  const thisProposalExecutionEvents = executionEvents.filter(
-    event => event.args?.proposalHash === proposalHash
-  );
-  if (thisProposalExecutionEvents && thisProposalExecutionEvents.length > 0)
-    proposalExecuted = true;
-
+  const executionEvents = await moduleContract.queryFilter(moduleContract.filters.TransactionExecuted(proposalHash));
+  const proposalExecuted = executionEvents.length > 0;
   return {
     dao: moduleDetails[0][0],
     oracle: moduleDetails[1][0],
