@@ -597,7 +597,6 @@
       "changeOutcome": "Change outcome",
       "executeTxs": "Execute transaction batch {0} of {1}",
       "executed": "All transactions have been executed",
-      "executedUma": "All transactions have been executed\n\n(Note: If the transactions in this proposal are exactly the same as the transactions in another proposal that has already executed, you will need to propose the transactions manually through your Safe's UMA Optimistic Governor module)",
       "rejected": "Proposal rejected",
       "error": "Something went wrong",
       "connectWallet": "Connect wallet to see execution details",
