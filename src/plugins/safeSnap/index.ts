@@ -149,13 +149,7 @@ export default class Plugin {
       provider
     );
 
-    let rules;
-    try {
-      rules = await moduleContract.rules();
-    } catch {
-      rules = undefined;
-    }
-    return rules !== undefined ? 'uma' : 'reality';
+    return moduleContract.rules().then(() => 'uma').catch(() => 'reality');
   }
 
   async getExecutionDetails(
