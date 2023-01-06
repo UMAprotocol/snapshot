@@ -606,7 +606,7 @@
       "proposalPassed": "Did the proposal pass?",
       "expired": "The proposal has expired",
       "approveBond": "Approve bond",
-      "confirmVoteResults": "Click if the proposal passed",
+      "confirmVoteResults": "Click to confirm the proposal passed",
       "executeTxsUma": "Execute transaction batch",
       "deleteDisputedProposal": "Delete disputed proposal"
     }
