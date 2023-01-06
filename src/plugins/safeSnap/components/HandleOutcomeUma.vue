@@ -39,13 +39,14 @@ const QuestionStates = {
   noWalletConnection: 0,
   loading: 1,
   waitingForVoteConfirmation: 2,
-  waitingForProposal: 3,
-  waitingForLiveness: 4,
-  proposalApproved: 5,
-  proposalRejected: 6,
-  completelyExecuted: 7,
-  disputedButNotResolved: 8,
-  disputedResolvedValid: 9
+  noTransactions: 3,
+  waitingForProposal: 4,
+  waitingForLiveness: 5,
+  proposalApproved: 6,
+  proposalRejected: 7,
+  completelyExecuted: 8,
+  disputedButNotResolved: 9,
+  disputedResolvedValid: 10
 };
 Object.freeze(QuestionStates);
 
@@ -302,6 +303,9 @@ const questionState = computed(() => {
 
   if (!questionDetails.value) return QuestionStates.error;
 
+  if (questionDetails.value.noTransactions)
+    return QuestionStates.noTransactions;
+
   const ts = (Date.now() / 1e3).toFixed();
   const { proposalEvent, proposalExecuted } = questionDetails.value;
 
@@ -372,6 +376,11 @@ onMounted(async () => {
         {{ $t('safeSnap.labels.confirmVoteResults') }}
       </BaseButton>
     </div>
+
+    <div v-if="questionState === questionStates.noTransactions" class="my-4">
+      {{ $t('safeSnap.labels.noTransactions') }}
+    </div>
+
     <div
       v-if="
         questionState === questionStates.waitingForProposal &&
@@ -386,6 +395,7 @@ onMounted(async () => {
         {{ $t('safeSnap.labels.approveBond') }}
       </BaseButton>
     </div>
+
     <div
       v-if="
         questionState === questionStates.waitingForProposal &&
