@@ -608,7 +608,8 @@
       "approveBond": "Approve bond",
       "confirmVoteResults": "Click to confirm the proposal passed",
       "executeTxsUma": "Execute transaction batch",
-      "deleteDisputedProposal": "Delete disputed proposal"
+      "deleteDisputedProposal": "Delete disputed proposal",
+      "deleteRejectedProposal": "Delete rejected proposal"
     }
   },
   "poap": {

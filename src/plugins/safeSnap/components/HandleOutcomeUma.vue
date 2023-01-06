@@ -251,7 +251,6 @@ const deleteDisputedProposal = async () => {
   }
 };
 
-// TODO: Implement button for deleting rejected proposal.
 const deleteRejectedProposal = async () => {
   if (!getInstance().isAuthenticated.value) return;
   action2InProgress.value = 'delete-rejected-proposal';
@@ -339,7 +338,6 @@ const questionState = computed(() => {
   // Proposal can be deleted if it has been rejected.
   if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
     return QuestionStates.proposalRejected;
-  // TODO: Allow user to delete proposal but do not show option to re-propose.
 
   return QuestionStates.error;
 });
@@ -424,6 +422,15 @@ onMounted(async () => {
         @click="deleteDisputedProposal"
       >
         {{ $t('safeSnap.labels.deleteDisputedProposal') }}
+      </BaseButton>
+    </div>
+
+    <div v-if="questionState === questionStates.proposalRejected" class="my-4">
+      <BaseButton
+        :loading="action2InProgress === 'delete-rejected-proposal'"
+        @click="deleteRejectedProposal"
+      >
+        {{ $t('safeSnap.labels.deleteRejectedProposal') }}
       </BaseButton>
     </div>
 
