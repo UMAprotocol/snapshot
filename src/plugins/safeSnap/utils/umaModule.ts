@@ -142,11 +142,20 @@ export const getModuleDetailsUma = async (
   const proposalEvents = await oracleContract.queryFilter(
     oracleContract.filters.ProposePrice(moduleAddress)
   );
+
   const thisModuleCurrentProposalEvent = proposalEvents.filter(
     event =>
       event.args?.ancillaryData === ancillaryData &&
       event.args?.timestamp == currentProposalHashTimestamp
   );
+
+  const transactionsProposedEvents = await moduleContract
+    .queryFilter(moduleContract.filters.TransactionsProposed())
+    .then(result => {
+      return result.filter(
+        event => event.args?.explanation === toUtf8Bytes(explanation)
+      );
+    });
 
   // Get the full proposal event (with state and disputer).
   const proposalEvent = await Promise.all(
@@ -183,7 +192,9 @@ export const getModuleDetailsUma = async (
   const executionEvents = await moduleContract.queryFilter(
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
-  const proposalExecuted = executionEvents.length > 0;
+
+  const proposalExecuted =
+    executionEvents.length > 0 && transactionsProposedEvents.length > 0;
 
   return {
     dao: moduleDetails[0][0],
