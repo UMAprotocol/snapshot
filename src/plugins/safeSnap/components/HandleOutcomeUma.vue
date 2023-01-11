@@ -308,6 +308,13 @@ const questionState = computed(() => {
   // If proposal has already been executed, prevents user from proposing again.
   if (proposalExecuted) return QuestionStates.completelyExecuted;
 
+  // Proposal can be deleted if it has been rejected.
+  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
+    return QuestionStates.proposalRejected;
+
+  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
+  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
+
   // User can confirm vote results if not done already and there is no proposal yet.
   if (!proposalEvent && !voteResultsConfirmed.value)
     return QuestionStates.waitingForVoteConfirmation;
@@ -317,11 +324,7 @@ const questionState = computed(() => {
     return QuestionStates.waitingForProposal;
 
   // Proposal has been made and is waiting for liveness period to complete.
-  if (!proposalEvent.isExpired && !proposalEvent.isDisputed)
-    return QuestionStates.waitingForLiveness;
-
-  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
-  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
+  if (!proposalEvent.isExpired) return QuestionStates.waitingForLiveness;
 
   // Proposal is approved if it expires without a dispute and hasn't been settled.
   if (proposalEvent.isExpired && !proposalEvent.isSettled)
@@ -330,14 +333,6 @@ const questionState = computed(() => {
   // Proposal is approved if it has been settled without a disputer and hasn't been executed.
   if (proposalEvent.isSettled && !proposalEvent.isDisputed && !proposalExecuted)
     return QuestionStates.proposalApproved;
-
-  // Proposal can not be re-proposed if it has been executed.
-  if (proposalEvent.isSettled && proposalExecuted)
-    return QuestionStates.completelyExecuted;
-
-  // Proposal can be deleted if it has been rejected.
-  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
-    return QuestionStates.proposalRejected;
 
   return QuestionStates.error;
 });
