@@ -91,7 +91,7 @@ export const getModuleDetailsUma = async (
 
   // Create ancillary data for proposal hash
   let ancillaryData = '';
-  let timestamp = 0;
+  let currentProposalHashTimestamp = 0;
   let proposalHash;
   if (transactions !== undefined) {
     proposalHash = keccak256(
@@ -109,7 +109,9 @@ export const getModuleDetailsUma = async (
         toUtf8Bytes(proposalHash.replace('0x', ''))
       ]
     );
-    timestamp = await moduleContract.proposalHashes(proposalHash);
+    currentProposalHashTimestamp = await moduleContract.proposalHashes(
+      proposalHash
+    );
   } else {
     return {
       dao: moduleDetails[0][0],
@@ -140,13 +142,15 @@ export const getModuleDetailsUma = async (
   const proposalEvents = await oracleContract.queryFilter(
     oracleContract.filters.ProposePrice(moduleAddress)
   );
-  const thisModuleProposalEvents = proposalEvents.filter(
-    event => event.args?.ancillaryData === ancillaryData
+  const thisModuleCurrentProposalEvent = proposalEvents.filter(
+    event =>
+      event.args?.ancillaryData === ancillaryData &&
+      event.args?.timestamp == currentProposalHashTimestamp
   );
 
   // Get the full proposal event (with state and disputer).
   const proposalEvent = await Promise.all(
-    thisModuleProposalEvents.map(event => {
+    thisModuleCurrentProposalEvent.map(event => {
       return oracleContract
         .getRequest(
           event.args?.requester,
@@ -176,10 +180,8 @@ export const getModuleDetailsUma = async (
     })
   );
 
-  // If we add a ProposalExecuted event to the OptimisticGovernor, we could check by both the hash and the timestamp.
-  // In its current form, this code will create issues if there are duplicate proposals.
   const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.TransactionExecuted(proposalHash)
+    moduleContract.filters.ProposalExecuted(proposalHash)
   );
   const proposalExecuted = executionEvents.length > 0;
 
