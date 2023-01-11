@@ -40,13 +40,12 @@ const QuestionStates = {
   loading: 1,
   waitingForVoteConfirmation: 2,
   noTransactions: 3,
-  waitingForProposal: 4,
-  waitingForLiveness: 5,
-  proposalApproved: 6,
-  proposalRejected: 7,
-  completelyExecuted: 8,
-  disputedButNotResolved: 9,
-  disputedResolvedValid: 10
+  completelyExecuted: 4,
+  proposalRejected: 5,
+  disputedButNotResolved: 6,
+  waitingForProposal: 7,
+  waitingForLiveness: 8,
+  proposalApproved: 9
 };
 Object.freeze(QuestionStates);
 
