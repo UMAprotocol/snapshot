@@ -149,24 +149,30 @@ export default class Plugin {
       provider
     );
 
-    return moduleContract.rules().then(() => 'uma').catch(() => 'reality');
+    return moduleContract
+      .rules()
+      .then(() => 'uma')
+      .catch(() => 'reality');
   }
 
   async getExecutionDetails(
     network: string,
     moduleAddress: string,
     proposalId: string,
+    explanation: string,
     transactions: any
   ): Promise<Omit<UmaOracleProposal, 'transactions'>> {
     const moduleDetails = await this.getModuleDetailsUma(
       network,
       moduleAddress,
+      explanation,
       transactions
     );
 
     return {
       ...moduleDetails,
-      proposalId
+      proposalId,
+      explanation
     };
   }
 
@@ -179,6 +185,7 @@ export default class Plugin {
     const moduleDetails = await this.getModuleDetailsUma(
       network,
       moduleAddress,
+      '',
       transactions
     );
 
@@ -233,10 +240,17 @@ export default class Plugin {
   async getModuleDetailsUma(
     network: string,
     moduleAddress: string,
+    explanation: string,
     transactions: any
   ) {
     const provider: StaticJsonRpcProvider = getProvider(network);
-    return getModuleDetailsUma(provider, network, moduleAddress, transactions);
+    return getModuleDetailsUma(
+      provider,
+      network,
+      moduleAddress,
+      explanation,
+      transactions
+    );
   }
 
   async *submitProposalWithHashes(
