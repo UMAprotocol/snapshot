@@ -149,14 +149,6 @@ export const getModuleDetailsUma = async (
       event.args?.timestamp == currentProposalHashTimestamp
   );
 
-  const transactionsProposedEvents = await moduleContract
-    .queryFilter(moduleContract.filters.TransactionsProposed())
-    .then(result => {
-      return result.filter(
-        event => event.args?.explanation === toUtf8Bytes(explanation)
-      );
-    });
-
   // Get the full proposal event (with state and disputer).
   const proposalEvent = await Promise.all(
     thisModuleCurrentProposalEvent.map(event => {
@@ -189,9 +181,19 @@ export const getModuleDetailsUma = async (
     })
   );
 
+  // Check for execution events matching the Snapshot proposal hash.
   const executionEvents = await moduleContract.queryFilter(
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
+
+  // Check if execution event matches this specific Snapshot proposal's IPFS CID.
+  const transactionsProposedEvents = await moduleContract
+    .queryFilter(moduleContract.filters.TransactionsProposed())
+    .then(result => {
+      return result.filter(
+        event => event.args?.explanation === toUtf8Bytes(explanation)
+      );
+    });
 
   const proposalExecuted =
     executionEvents.length > 0 && transactionsProposedEvents.length > 0;
