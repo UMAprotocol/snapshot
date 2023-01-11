@@ -81,7 +81,6 @@ export const getModuleDetailsUma = async (
   const minimumBond = moduleDetails[3][0];
   const optimisticOracle = moduleDetails[1][0];
   const bondDetails = await getBondDetails(provider, moduleAddress);
-  console.log(explanation);
 
   if (
     Number(minimumBond) > 0 &&
