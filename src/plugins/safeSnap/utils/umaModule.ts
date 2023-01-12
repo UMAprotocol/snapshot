@@ -207,7 +207,16 @@ export const getModuleDetailsUma = async (
 
   console.log('execution events matching proposal hash:', executionEvents);
 
-  const proposalExecuted = executionEvents.length > 0;
+  const proposalTimes: any = [];
+  const executionTimes: any = [];
+  thisProposalTransactionsProposedEvents.forEach(tx =>
+    proposalTimes.push(tx.args?.proposalTime)
+  );
+  executionEvents.forEach(tx => executionTimes.push(tx.args?.proposalTime));
+
+  const proposalExecuted = proposalTimes.some(time =>
+    executionTimes.includes(time)
+  );
 
   return {
     dao: moduleDetails[0][0],
