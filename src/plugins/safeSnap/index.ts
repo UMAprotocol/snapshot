@@ -283,7 +283,7 @@ export default class Plugin {
       moduleAddress,
       UMA_MODULE_ABI,
       'proposeTransactions',
-      [transactions, '']
+      [transactions, '0x']
       // [[["0xB8034521BB1a343D556e5005680B3F17FFc74BeD", 0, "0", "0x"]], '0x']
     );
     yield;
