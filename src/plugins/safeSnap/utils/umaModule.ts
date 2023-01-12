@@ -136,7 +136,7 @@ export const getModuleDetailsUma = async (
   const proposalHashTimestamp = await moduleContract.proposalHashes(
     proposalHash
   );
-  console.log('proposal hash timestamp:', proposalHashTimestamp);
+  console.log('proposal hash timestamp:', proposalHashTimestamp.toNumber);
 
   const activeProposal = proposalHashTimestamp.gt(0);
   console.log('active proposal?', activeProposal);
