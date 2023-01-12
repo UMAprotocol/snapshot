@@ -133,13 +133,15 @@ export const getModuleDetailsUma = async (
     };
   }
   // Check for active proposals
-  const proposalHashTimestamp = await moduleContract
-    .proposalHashes(proposalHash)
-    .then(value => BigNumber.from(value));
-  console.log('proposal hash timestamp:', proposalHashTimestamp);
+  const proposalHashTimestamp = await moduleContract.proposalHashes(
+    proposalHash
+  );
+  console.log(
+    'proposal hash timestamp:',
+    BigNumber.from(proposalHashTimestamp)
+  );
 
-  const activeProposal =
-    proposalHashTimestamp != '0x0000000000000000000000000000000000000000';
+  const activeProposal = BigNumber.from(proposalHashTimestamp).isZero;
   console.log('active proposal?', activeProposal);
 
   // Search for requests with matching ancillary data
