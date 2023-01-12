@@ -138,7 +138,7 @@ export const getModuleDetailsUma = async (
   );
   console.log('proposal hash timestamp:', proposalHashTimestamp);
 
-  const activeProposal = proposalHashTimestamp > 0;
+  const activeProposal = proposalHashTimestamp.gt(0);
   console.log('active proposal?', activeProposal);
 
   // Search for requests with matching ancillary data
