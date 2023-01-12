@@ -144,9 +144,8 @@ export const getModuleDetailsUma = async (
   );
 
   const thisModuleProposalEvents = proposalEvents.filter(
-    event =>
-      event.args?.ancillaryData === ancillaryData &&
-      event.args?.timestamp == currentProposalHashTimestamp
+    event => event.args?.ancillaryData === ancillaryData /*&&
+      event.args?.timestamp == currentProposalHashTimestamp*/
   );
 
   // Get the full proposal events (with state and disputer).
@@ -183,28 +182,28 @@ export const getModuleDetailsUma = async (
   );
 
   // Check for execution events matching the Snapshot proposal hash.
-  // const executionEvents = await moduleContract.queryFilter(
-  //   moduleContract.filters.ProposalExecuted(proposalHash)
-  // );
+  const executionEvents = await moduleContract.queryFilter(
+    moduleContract.filters.ProposalExecuted(proposalHash)
+  );
 
-  const proposalExecuted = false;
+  let proposalExecuted = false;
 
-  // if (thisModuleFullProposalEvents) {
-  //   // Check if execution event matches this specific Snapshot proposal's IPFS CID.
-  //   const transactionsProposedEvents = await moduleContract
-  //     .queryFilter(moduleContract.filters.TransactionsProposed())
-  //     .then(result => {
-  //       return result.filter(
-  //         event =>
-  //           event.args?.explanation === toUtf8Bytes(explanation) &&
-  //           event.args?.proposalHash === proposalHash
-  //       );
-  //     });
+  if (thisModuleFullProposalEvents) {
+    // Check if execution event matches this specific Snapshot proposal's IPFS CID.
+    const transactionsProposedEvents = await moduleContract
+      .queryFilter(moduleContract.filters.TransactionsProposed())
+      .then(result => {
+        return result.filter(
+          event =>
+            event.args?.explanation === toUtf8Bytes(explanation) &&
+            event.args?.proposalHash === proposalHash
+        );
+      });
 
-  // Set proposal executed to true if this Snapshot proposal was executed.
-  // proposalExecuted =
-  //   executionEvents.length > 0 && transactionsProposedEvents.length > 0;
-  // }
+    // Set proposal executed to true if this Snapshot proposal was executed.
+    proposalExecuted =
+      executionEvents.length > 0 && transactionsProposedEvents.length > 0;
+  }
 
   return {
     dao: moduleDetails[0][0],
