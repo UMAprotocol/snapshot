@@ -180,22 +180,6 @@ export const getModuleDetailsUma = async (
     })
   );
 
-  // Check for execution events matching the Snapshot proposal hash.
-  // const thisModuleTransactionsProposedEvents = await moduleContract
-  //   .queryFilter(moduleContract.filters.TransactionsProposed())
-  //   .then(result => {
-  //     return result.filter(
-  //       event =>
-  //         event.args?.explanation === toUtf8Bytes(explanation) &&
-  //         event.args?.proposalHash === proposalHash
-  //     );
-  //   });
-
-  // console.log(
-  //   'transactions proposed events:',
-  //   thisModuleTransactionsProposedEvents
-  // );
-
   const transactionsProposedEvents = await moduleContract.queryFilter(
     moduleContract.filters.TransactionsProposed()
   );
@@ -206,7 +190,11 @@ export const getModuleDetailsUma = async (
     );
 
   console.log('explanation:', explanation);
-  console.log('transactions proposed:', thisProposalTransactionsProposedEvents);
+  console.log('transactions proposed:', transactionsProposedEvents);
+  console.log(
+    'transactions proposed for this proposal:',
+    thisProposalTransactionsProposedEvents
+  );
 
   const executionEvents = await moduleContract.queryFilter(
     moduleContract.filters.ProposalExecuted(proposalHash)
