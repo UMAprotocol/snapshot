@@ -136,7 +136,7 @@ export const getModuleDetailsUma = async (
   const proposalHashTimestamp = await moduleContract.proposalHashes(
     proposalHash
   );
-  console.log('proposal hash timestamp:', proposalHashTimestamp.toNumber);
+  console.log('proposal hash timestamp:', proposalHashTimestamp);
 
   const activeProposal = proposalHashTimestamp.gt(0);
   console.log('active proposal?', activeProposal);
@@ -158,7 +158,7 @@ export const getModuleDetailsUma = async (
   const thisModuleProposalEvents = proposalEvents.filter(
     event =>
       event.args?.ancillaryData === ancillaryData &&
-      event.args?.timestamp === proposalHashTimestamp
+      event.args?.timestamp == proposalHashTimestamp
   );
 
   console.log('this module proposal events:', thisModuleProposalEvents);
