@@ -244,7 +244,7 @@ export const getModuleDetailsUma = async (
     needsBondApproval: needsApproval,
     noTransactions: false,
     activeProposal: activeProposal,
-    proposalEvent: thisModuleFullProposalEvent,
+    proposalEvent: thisModuleFullProposalEvent[0],
     proposalExecuted: proposalExecuted
   };
 };
