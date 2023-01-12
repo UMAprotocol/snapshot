@@ -190,7 +190,7 @@ export const getModuleDetailsUma = async (
 
   const thisProposalTransactionsProposedEvents =
     transactionsProposedEvents.filter(
-      event => event.args?.explanation === toUtf8Bytes(explanation)
+      event => event.args?.explanation === explanation
     );
 
   console.log('explanation:', explanation);
