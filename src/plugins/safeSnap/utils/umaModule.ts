@@ -181,10 +181,22 @@ export const getModuleDetailsUma = async (
   );
 
   // Check for execution events matching the Snapshot proposal hash.
+  const thisModuleTransactionsProposedEvents = await moduleContract
+    .queryFilter(moduleContract.filters.TransactionsProposed())
+    .then(result => {
+      return result.filter(
+        event =>
+          event.args?.explanation === toUtf8Bytes(explanation) &&
+          event.args?.proposalHash === proposalHash
+      );
+    });
+
+  console.log(thisModuleTransactionsProposedEvents);
+
   const executionEvents = await moduleContract.queryFilter(
     moduleContract.filters.ProposalExecuted(
-      proposalHash,
-      thisModuleFullProposalEvents[0].proposalTime
+      proposalHash /*,
+      thisModuleTransactionsProposedEvents[0].proposalTime*/
     )
   );
 
