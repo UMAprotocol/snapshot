@@ -279,6 +279,7 @@ export default class Plugin {
     transactions: any
   ) {
     console.log('explanation in submit function:', explanation);
+    console.log('transactions in submit function:', transactions);
     const explanationBytes = toUtf8Bytes(explanation);
     console.log('explanationBytes:', explanationBytes);
     const tx = await sendTransaction(
