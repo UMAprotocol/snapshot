@@ -183,26 +183,32 @@ export const getModuleDetailsUma = async (
   );
 
   // Check for execution events matching the Snapshot proposal hash.
-  const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.ProposalExecuted(
-      proposalHash,
-      proposalEvent[0].proposalTime
-    )
-  );
+  let executionEvents;
+  let proposalExecuted = false;
 
-  // Check if execution event matches this specific Snapshot proposal's IPFS CID.
-  const transactionsProposedEvents = await moduleContract
-    .queryFilter(moduleContract.filters.TransactionsProposed())
-    .then(result => {
-      return result.filter(
-        event =>
-          event.args?.explanation === toUtf8Bytes(explanation) &&
-          event.args?.proposalHash === proposalHash
-      );
-    });
+  if (proposalEvent[0]) {
+    executionEvents = await moduleContract.queryFilter(
+      moduleContract.filters.ProposalExecuted(
+        proposalHash,
+        proposalEvent[0].proposalTime
+      )
+    );
 
-  const proposalExecuted =
-    executionEvents.length > 0 && transactionsProposedEvents.length > 0;
+    // Check if execution event matches this specific Snapshot proposal's IPFS CID.
+    const transactionsProposedEvents = await moduleContract
+      .queryFilter(moduleContract.filters.TransactionsProposed())
+      .then(result => {
+        return result.filter(
+          event =>
+            event.args?.explanation === toUtf8Bytes(explanation) &&
+            event.args?.proposalHash === proposalHash
+        );
+      });
+
+    // Set proposal executed to true if this Snapshot proposal was executed.
+    proposalExecuted =
+      executionEvents.length > 0 && transactionsProposedEvents.length > 0;
+  }
 
   return {
     dao: moduleDetails[0][0],
