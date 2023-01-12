@@ -133,9 +133,9 @@ export const getModuleDetailsUma = async (
     };
   }
   // Check for active proposals
-  const proposalHashTimestamp = await moduleContract.proposalHashes(
-    proposalHash
-  );
+  const proposalHashTimestamp = await moduleContract
+    .proposalHashes(proposalHash)
+    .then(value => BigNumber.from(value));
   console.log('proposal hash timestamp:', proposalHashTimestamp);
 
   const activeProposal =
