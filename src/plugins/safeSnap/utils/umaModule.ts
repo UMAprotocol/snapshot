@@ -136,10 +136,7 @@ export const getModuleDetailsUma = async (
   const proposalHashTimestamp = await moduleContract.proposalHashes(
     proposalHash
   );
-  console.log('proposal hash timestamp:', proposalHashTimestamp);
-
   const activeProposal = proposalHashTimestamp.gt(0);
-  console.log('active proposal?', activeProposal);
 
   // Search for requests with matching ancillary data
   const oracleContract = new Contract(
@@ -153,15 +150,11 @@ export const getModuleDetailsUma = async (
     oracleContract.filters.ProposePrice(moduleAddress)
   );
 
-  console.log('proposal events:', proposalEvents);
-
   const thisModuleProposalEvent = proposalEvents.filter(
     event =>
       event.args?.ancillaryData === ancillaryData &&
       event.args?.timestamp.toString() === proposalHashTimestamp.toString()
   );
-
-  console.log('this module proposal event:', thisModuleProposalEvent);
 
   // Get the full proposal events (with state and disputer).
   const thisModuleFullProposalEvent = await Promise.all(
@@ -196,6 +189,7 @@ export const getModuleDetailsUma = async (
     })
   );
 
+  // Check if this specific proposal has already been executed.
   const transactionsProposedEvents = await moduleContract.queryFilter(
     moduleContract.filters.TransactionsProposed()
   );
@@ -205,37 +199,24 @@ export const getModuleDetailsUma = async (
       event => toUtf8String(event.args?.explanation) === explanation
     );
 
-  console.log('explanation:', explanation);
-  console.log('explanation to bytes:', toUtf8Bytes(explanation));
-  console.log('transactions proposed:', transactionsProposedEvents);
-  console.log(
-    'transactions proposed for this proposal:',
-    thisProposalTransactionsProposedEvents
-  );
-
   const executionEvents = await moduleContract.queryFilter(
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
 
-  console.log('execution events matching proposal hash:', executionEvents);
-
   const proposalTimes: any = [];
   const executionTimes: any = [];
+
   thisProposalTransactionsProposedEvents.forEach(tx =>
     proposalTimes.push(tx.args?.proposalTime.toString())
   );
+
   executionEvents.forEach(tx =>
     executionTimes.push(tx.args?.proposalTime.toString())
   );
 
-  console.log('proposal times:', proposalTimes);
-  console.log('execution times:', executionTimes);
-
   const proposalExecuted = proposalTimes.some(time =>
     executionTimes.includes(time)
   );
-
-  console.log('proposal executed?:', proposalExecuted);
 
   return {
     dao: moduleDetails[0][0],
