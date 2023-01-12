@@ -194,6 +194,7 @@ export const getModuleDetailsUma = async (
     );
 
   console.log('explanation:', explanation);
+  console.log('explanation to bytes:', toUtf8Bytes(explanation));
   console.log('transactions proposed:', transactionsProposedEvents);
   console.log(
     'transactions proposed for this proposal:',
