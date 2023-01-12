@@ -119,7 +119,7 @@ const updateDetails = async () => {
       props.network,
       props.umaAddress,
       props.proposal.id,
-      props.proposal.ifps,
+      props.proposal.ipfs,
       getTransactions()
     );
   } catch (e) {
