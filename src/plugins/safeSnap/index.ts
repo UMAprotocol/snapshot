@@ -280,14 +280,12 @@ export default class Plugin {
   ) {
     console.log('explanation in submit function:', explanation);
     console.log('transactions in submit function:', transactions);
-    const explanationBytes = toUtf8Bytes(explanation);
-    console.log('explanationBytes:', explanationBytes);
     const tx = await sendTransaction(
       web3,
       moduleAddress,
       UMA_MODULE_ABI,
       'proposeTransactions',
-      [transactions, explanationBytes]
+      [transactions, explanation]
       // [[["0xB8034521BB1a343D556e5005680B3F17FFc74BeD", 0, "0", "0x"]], '0x']
     );
     yield;
