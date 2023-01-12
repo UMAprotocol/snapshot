@@ -51,6 +51,7 @@ export const getModuleDetailsUma = async (
   provider: StaticJsonRpcProvider,
   network: string,
   moduleAddress: string,
+  explanation: string,
   transactions: any
 ): Promise<{
   dao: string;
@@ -90,7 +91,7 @@ export const getModuleDetailsUma = async (
 
   // Create ancillary data for proposal hash
   let ancillaryData = '';
-  let timestamp = 0;
+  let currentProposalHashTimestamp = 0;
   let proposalHash;
   if (transactions !== undefined) {
     proposalHash = keccak256(
@@ -108,7 +109,9 @@ export const getModuleDetailsUma = async (
         toUtf8Bytes(proposalHash.replace('0x', ''))
       ]
     );
-    timestamp = await moduleContract.proposalHashes(proposalHash);
+    currentProposalHashTimestamp = await moduleContract.proposalHashes(
+      proposalHash
+    );
   } else {
     return {
       dao: moduleDetails[0][0],
@@ -139,14 +142,17 @@ export const getModuleDetailsUma = async (
   const proposalEvents = await oracleContract.queryFilter(
     oracleContract.filters.ProposePrice(moduleAddress)
   );
+
+  console.log('proposal events:', proposalEvents);
+
   const thisModuleProposalEvents = proposalEvents.filter(
-    event =>
-      event.args?.ancillaryData === ancillaryData &&
-      Number(event.args?.timestamp) === Number(timestamp)
+    event => event.args?.ancillaryData === ancillaryData
   );
 
-  // Get the full proposal event (with state and disputer).
-  const proposalEvent = await Promise.all(
+  console.log('this module proposal events:', thisModuleProposalEvents);
+
+  // Get the full proposal events (with state and disputer).
+  const thisModuleFullProposalEvents = await Promise.all(
     thisModuleProposalEvents.map(event => {
       return oracleContract
         .getRequest(
@@ -171,17 +177,33 @@ export const getModuleDetailsUma = async (
             isDisputed: isDisputed,
             isSettled: result.settled,
             resolvedPrice: result.resolvedPrice,
-            proposalHash: proposalHash
+            proposalHash: proposalHash,
+            proposalTime: result.timestamp
           };
         });
     })
   );
 
-  // If we add a ProposalExecuted event to the OptimisticGovernor, we could check by both the hash and the timestamp.
-  // In its current form, this code will create issues if there are duplicate proposals.
-  const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.TransactionExecuted(proposalHash)
+  const transactionsProposedEvents = await moduleContract.queryFilter(
+    moduleContract.filters.TransactionsProposed()
   );
+
+  const thisProposalTransactionsProposedEvents =
+    transactionsProposedEvents.filter(
+      event => event.args?.explanation === explanation
+    );
+
+  console.log('explanation:', explanation);
+  console.log('transactions proposed:', transactionsProposedEvents);
+  console.log(
+    'transactions proposed for this proposal:',
+    thisProposalTransactionsProposedEvents
+  );
+
+  const executionEvents = await moduleContract.queryFilter(
+    moduleContract.filters.ProposalExecuted(proposalHash)
+  );
+
   const proposalExecuted = executionEvents.length > 0;
 
   return {
@@ -197,7 +219,7 @@ export const getModuleDetailsUma = async (
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
     noTransactions: false,
-    proposalEvent: proposalEvent[0],
+    proposalEvent: thisModuleFullProposalEvents[0],
     proposalExecuted: proposalExecuted
   };
 };
