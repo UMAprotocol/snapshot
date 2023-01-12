@@ -155,17 +155,17 @@ export const getModuleDetailsUma = async (
 
   console.log('proposal events:', proposalEvents);
 
-  const thisModuleProposalEvents = proposalEvents.filter(
+  const thisModuleProposalEvent = proposalEvents.filter(
     event =>
       event.args?.ancillaryData === ancillaryData &&
       event.args?.timestamp.toString() === proposalHashTimestamp.toString()
   );
 
-  console.log('this module proposal events:', thisModuleProposalEvents);
+  console.log('this module proposal event:', thisModuleProposalEvent);
 
   // Get the full proposal events (with state and disputer).
-  const thisModuleFullProposalEvents = await Promise.all(
-    thisModuleProposalEvents.map(event => {
+  const thisModuleFullProposalEvent = await Promise.all(
+    thisModuleProposalEvent.map(event => {
       return oracleContract
         .getRequest(
           event.args?.requester,
@@ -244,7 +244,7 @@ export const getModuleDetailsUma = async (
     needsBondApproval: needsApproval,
     noTransactions: false,
     activeProposal: activeProposal,
-    proposalEvent: thisModuleFullProposalEvents[0],
+    proposalEvent: thisModuleFullProposalEvent,
     proposalExecuted: proposalExecuted
   };
 };
