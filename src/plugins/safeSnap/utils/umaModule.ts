@@ -191,14 +191,16 @@ export const getModuleDetailsUma = async (
       );
     });
 
-  console.log(thisModuleTransactionsProposedEvents);
+  console.log(
+    'transactions proposed events:',
+    thisModuleTransactionsProposedEvents
+  );
 
   const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.ProposalExecuted(
-      proposalHash /*,
-      thisModuleTransactionsProposedEvents[0].proposalTime*/
-    )
+    moduleContract.filters.ProposalExecuted(proposalHash)
   );
+
+  //thisModuleTransactionsProposedEvents[0].proposalTime
 
   const proposalExecuted = executionEvents.length > 0;
 
