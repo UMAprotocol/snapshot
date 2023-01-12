@@ -143,15 +143,15 @@ export const getModuleDetailsUma = async (
     oracleContract.filters.ProposePrice(moduleAddress)
   );
 
-  const thisModuleCurrentProposalEvent = proposalEvents.filter(
+  const thisModuleProposalEvents = proposalEvents.filter(
     event =>
       event.args?.ancillaryData === ancillaryData &&
       event.args?.timestamp == currentProposalHashTimestamp
   );
 
   // Get the full proposal events (with state and disputer).
-  const proposalEvent = await Promise.all(
-    thisModuleCurrentProposalEvent.map(event => {
+  const thisModuleFullProposalEvents = await Promise.all(
+    thisModuleProposalEvents.map(event => {
       return oracleContract
         .getRequest(
           event.args?.requester,
@@ -183,17 +183,13 @@ export const getModuleDetailsUma = async (
   );
 
   // Check for execution events matching the Snapshot proposal hash.
-  let executionEvents;
+  const executionEvents = await moduleContract.queryFilter(
+    moduleContract.filters.ProposalExecuted(proposalHash)
+  );
+
   let proposalExecuted = false;
 
-  if (proposalEvent[0]) {
-    executionEvents = await moduleContract.queryFilter(
-      moduleContract.filters.ProposalExecuted(
-        proposalHash,
-        proposalEvent[0].proposalTime
-      )
-    );
-
+  if (thisModuleFullProposalEvents) {
     // Check if execution event matches this specific Snapshot proposal's IPFS CID.
     const transactionsProposedEvents = await moduleContract
       .queryFilter(moduleContract.filters.TransactionsProposed())
@@ -223,7 +219,7 @@ export const getModuleDetailsUma = async (
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
     noTransactions: false,
-    proposalEvent: proposalEvent[0],
+    proposalEvent: thisModuleFullProposalEvents[0],
     proposalExecuted: proposalExecuted
   };
 };
