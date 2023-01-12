@@ -241,7 +241,7 @@ export const getModuleDetailsUma = async (
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
     noTransactions: false,
-    activeProposal: activeProposal,
+    activeProposal: activeProposal(),
     proposalEvent: thisModuleFullProposalEvents[0],
     proposalExecuted: proposalExecuted
   };
