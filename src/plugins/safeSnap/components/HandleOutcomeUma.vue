@@ -45,6 +45,70 @@ const QuestionStates = {
 };
 Object.freeze(QuestionStates);
 
+const loading = ref(true);
+const actionInProgress = ref(false);
+const action2InProgress = ref(false);
+const voteResultsConfirmed = ref(false);
+const questionStates = ref(QuestionStates);
+const questionDetails = ref(undefined);
+
+const usingMetaMask = computed(() => {
+  return window.ethereum && getInstance().provider.value?.isMetaMask;
+});
+
+const connectedToRightChain = computed(() => {
+  return getInstance().provider.value?.chainId === parseInt(props.network);
+});
+
+const networkName = computed(() => {
+  return networks[props.network].name;
+});
+
+const questionState = computed(() => {
+  if (!web3.value.account) return QuestionStates.noWalletConnection;
+
+  if (loading.value) return QuestionStates.loading;
+
+  if (!questionDetails.value) return QuestionStates.error;
+
+  if (questionDetails.value.noTransactions)
+    return QuestionStates.noTransactions;
+
+  const ts = (Date.now() / 1e3).toFixed();
+  const { proposalEvent, proposalExecuted } = questionDetails.value;
+
+  // If proposal has already been executed, prevents user from proposing again.
+  if (proposalExecuted) return QuestionStates.completelyExecuted;
+
+  // User can confirm vote results if not done already and there is no proposal yet.
+  if (!proposalEvent && !voteResultsConfirmed.value)
+    return QuestionStates.waitingForVoteConfirmation;
+
+  // Proposal can be made if it has not been made already and user confirmed vote results.
+  if (!proposalEvent && voteResultsConfirmed)
+    return QuestionStates.waitingForProposal;
+
+  // Proposal can be deleted if it has been rejected.
+  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
+    return QuestionStates.proposalRejected;
+
+  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
+  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
+
+  // Proposal has been made and is waiting for liveness period to complete.
+  if (!proposalEvent.isExpired) return QuestionStates.waitingForLiveness;
+
+  // Proposal is approved if it expires without a dispute and hasn't been settled.
+  if (proposalEvent.isExpired && !proposalEvent.isSettled)
+    return QuestionStates.proposalApproved;
+
+  // Proposal is approved if it has been settled without a disputer and hasn't been executed.
+  if (proposalEvent.isSettled && !proposalEvent.isDisputed && !proposalExecuted)
+    return QuestionStates.proposalApproved;
+
+  return QuestionStates.error;
+});
+
 const ensureRightNetwork = async chainId => {
   const chainIdInt = parseInt(chainId);
   const connectedToChainId = getInstance().provider.value?.chainId;
@@ -96,13 +160,6 @@ const ensureRightNetwork = async chainId => {
   }
 };
 
-const loading = ref(true);
-const actionInProgress = ref(false);
-const action2InProgress = ref(false);
-const voteResultsConfirmed = ref(false);
-const questionStates = ref(QuestionStates);
-const questionDetails = ref(undefined);
-
 const getTransactions = () => {
   return props.batches.map(batch => [
     batch.transactions[0].to,
@@ -122,6 +179,7 @@ const updateDetails = async () => {
       props.proposal.ipfs,
       getTransactions()
     );
+    console.log('question state:', questionState);
   } catch (e) {
     console.error(e);
   } finally {
@@ -280,63 +338,6 @@ const deleteRejectedProposal = async () => {
     action2InProgress.value = null;
   }
 };
-
-const usingMetaMask = computed(() => {
-  return window.ethereum && getInstance().provider.value?.isMetaMask;
-});
-
-const connectedToRightChain = computed(() => {
-  return getInstance().provider.value?.chainId === parseInt(props.network);
-});
-
-const networkName = computed(() => {
-  return networks[props.network].name;
-});
-
-const questionState = computed(() => {
-  if (!web3.value.account) return QuestionStates.noWalletConnection;
-
-  if (loading.value) return QuestionStates.loading;
-
-  if (!questionDetails.value) return QuestionStates.error;
-
-  if (questionDetails.value.noTransactions)
-    return QuestionStates.noTransactions;
-
-  const ts = (Date.now() / 1e3).toFixed();
-  const { proposalEvent, proposalExecuted } = questionDetails.value;
-
-  // If proposal has already been executed, prevents user from proposing again.
-  if (proposalExecuted) return QuestionStates.completelyExecuted;
-
-  // User can confirm vote results if not done already and there is no proposal yet.
-  if (!proposalEvent && !voteResultsConfirmed.value)
-    return QuestionStates.waitingForVoteConfirmation;
-
-  // Proposal can be made if it has not been made already and user confirmed vote results.
-  if (!proposalEvent && voteResultsConfirmed)
-    return QuestionStates.waitingForProposal;
-
-  // Proposal can be deleted if it has been rejected.
-  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
-    return QuestionStates.proposalRejected;
-
-  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
-  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
-
-  // Proposal has been made and is waiting for liveness period to complete.
-  if (!proposalEvent.isExpired) return QuestionStates.waitingForLiveness;
-
-  // Proposal is approved if it expires without a dispute and hasn't been settled.
-  if (proposalEvent.isExpired && !proposalEvent.isSettled)
-    return QuestionStates.proposalApproved;
-
-  // Proposal is approved if it has been settled without a disputer and hasn't been executed.
-  if (proposalEvent.isSettled && !proposalEvent.isDisputed && !proposalExecuted)
-    return QuestionStates.proposalApproved;
-
-  return QuestionStates.error;
-});
 
 onMounted(async () => {
   await updateDetails();
