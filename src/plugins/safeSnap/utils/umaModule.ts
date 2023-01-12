@@ -186,7 +186,9 @@ export const getModuleDetailsUma = async (
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
 
-  const proposalExecuted = false;
+  const proposalExecuted = executionEvents.length > 0;
+
+  // const proposalExecuted = false;
 
   // if (thisModuleFullProposalEvents) {
   //   // Check if execution event matches this specific Snapshot proposal's IPFS CID.
