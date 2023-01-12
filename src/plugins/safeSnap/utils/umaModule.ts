@@ -186,24 +186,24 @@ export const getModuleDetailsUma = async (
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
 
-  let proposalExecuted = false;
+  const proposalExecuted = false;
 
-  if (thisModuleFullProposalEvents) {
-    // Check if execution event matches this specific Snapshot proposal's IPFS CID.
-    const transactionsProposedEvents = await moduleContract
-      .queryFilter(moduleContract.filters.TransactionsProposed())
-      .then(result => {
-        return result.filter(
-          event =>
-            event.args?.explanation === toUtf8Bytes(explanation) &&
-            event.args?.proposalHash === proposalHash
-        );
-      });
+  // if (thisModuleFullProposalEvents) {
+  //   // Check if execution event matches this specific Snapshot proposal's IPFS CID.
+  //   const transactionsProposedEvents = await moduleContract
+  //     .queryFilter(moduleContract.filters.TransactionsProposed())
+  //     .then(result => {
+  //       return result.filter(
+  //         event =>
+  //           event.args?.explanation === toUtf8Bytes(explanation) &&
+  //           event.args?.proposalHash === proposalHash
+  //       );
+  //     });
 
-    // Set proposal executed to true if this Snapshot proposal was executed.
-    proposalExecuted =
-      executionEvents.length > 0 && transactionsProposedEvents.length > 0;
-  }
+  //   // Set proposal executed to true if this Snapshot proposal was executed.
+  //   proposalExecuted =
+  //     executionEvents.length > 0 && transactionsProposedEvents.length > 0;
+  // }
 
   return {
     dao: moduleDetails[0][0],
