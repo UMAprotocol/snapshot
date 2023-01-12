@@ -143,9 +143,13 @@ export const getModuleDetailsUma = async (
     oracleContract.filters.ProposePrice(moduleAddress)
   );
 
+  console.log('proposal events:', proposalEvents);
+
   const thisModuleProposalEvents = proposalEvents.filter(
     event => event.args?.ancillaryData === ancillaryData
   );
+
+  console.log('this module proposal events:', thisModuleProposalEvents);
 
   // Get the full proposal events (with state and disputer).
   const thisModuleFullProposalEvents = await Promise.all(
