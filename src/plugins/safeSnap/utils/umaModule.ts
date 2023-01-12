@@ -226,6 +226,9 @@ export const getModuleDetailsUma = async (
   );
   executionEvents.forEach(tx => executionTimes.push(tx.args?.proposalTime));
 
+  console.log('proposal times:', proposalTimes);
+  console.log('execution times:', executionTimes);
+
   const proposalExecuted = proposalTimes.some(time =>
     executionTimes.includes(time)
   );
