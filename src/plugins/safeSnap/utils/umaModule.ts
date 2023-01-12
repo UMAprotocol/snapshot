@@ -156,7 +156,9 @@ export const getModuleDetailsUma = async (
   console.log('proposal events:', proposalEvents);
 
   const thisModuleProposalEvents = proposalEvents.filter(
-    event => event.args?.ancillaryData === ancillaryData
+    event =>
+      event.args?.ancillaryData === ancillaryData &&
+      event.args?.timestamp === proposalHashTimestamp
   );
 
   console.log('this module proposal events:', thisModuleProposalEvents);
