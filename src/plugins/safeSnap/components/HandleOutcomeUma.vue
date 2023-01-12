@@ -308,13 +308,6 @@ const questionState = computed(() => {
   // If proposal has already been executed, prevents user from proposing again.
   if (proposalExecuted) return QuestionStates.completelyExecuted;
 
-  // Proposal can be deleted if it has been rejected.
-  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
-    return QuestionStates.proposalRejected;
-
-  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
-  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
-
   // User can confirm vote results if not done already and there is no proposal yet.
   if (!proposalEvent && !voteResultsConfirmed.value)
     return QuestionStates.waitingForVoteConfirmation;
@@ -322,6 +315,13 @@ const questionState = computed(() => {
   // Proposal can be made if it has not been made already and user confirmed vote results.
   if (!proposalEvent && voteResultsConfirmed)
     return QuestionStates.waitingForProposal;
+
+  // Proposal can be deleted if it has been rejected.
+  if (proposalEvent.isDisputed && proposalEvent.resolvedPrice == 0)
+    return QuestionStates.proposalRejected;
+
+  // If disputed, a proposal can be deleted to enable a proposal to be proposed again.
+  if (proposalEvent.isDisputed) return QuestionStates.disputedButNotResolved;
 
   // Proposal has been made and is waiting for liveness period to complete.
   if (!proposalEvent.isExpired) return QuestionStates.waitingForLiveness;
