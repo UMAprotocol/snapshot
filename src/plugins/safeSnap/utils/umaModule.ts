@@ -66,6 +66,7 @@ export const getModuleDetailsUma = async (
   userBalance: BigNumber;
   needsBondApproval: boolean;
   noTransactions: boolean;
+  activeProposal: boolean;
   proposalEvent: any;
   proposalExecuted: boolean;
 }> => {
@@ -126,10 +127,18 @@ export const getModuleDetailsUma = async (
       userBalance: bondDetails.currentUserBalance,
       needsBondApproval: needsApproval,
       noTransactions: true,
+      activeProposal: false,
       proposalEvent: {},
       proposalExecuted: false
     };
   }
+  // Check for active proposals
+  const proposalHashTimestamp = await moduleContract.proposalHashes(
+    proposalHash
+  );
+  const activeProposal =
+    proposalHashTimestamp != '0x0000000000000000000000000000000000000000';
+  console.log('active proposal?', activeProposal);
 
   // Search for requests with matching ancillary data
   const oracleContract = new Contract(
@@ -231,6 +240,7 @@ export const getModuleDetailsUma = async (
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
     noTransactions: false,
+    activeProposal: activeProposal,
     proposalEvent: thisModuleFullProposalEvents[0],
     proposalExecuted: proposalExecuted
   };
