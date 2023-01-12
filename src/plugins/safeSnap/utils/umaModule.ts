@@ -230,6 +230,8 @@ export const getModuleDetailsUma = async (
     executionTimes.includes(time)
   );
 
+  console.log('proposal executed?:', proposalExecuted);
+
   return {
     dao: moduleDetails[0][0],
     oracle: moduleDetails[1][0],
