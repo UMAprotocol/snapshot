@@ -304,17 +304,18 @@ const questionState = computed(() => {
     return QuestionStates.noTransactions;
 
   const ts = (Date.now() / 1e3).toFixed();
-  const { proposalEvent, proposalExecuted } = questionDetails.value;
+  const { proposalEvent, proposalExecuted, activeProposal } =
+    questionDetails.value;
 
   // If proposal has already been executed, prevents user from proposing again.
   if (proposalExecuted) return QuestionStates.completelyExecuted;
 
   // User can confirm vote results if not done already and there is no proposal yet.
-  if (!proposalEvent && !voteResultsConfirmed.value)
+  if (!activeProposal && !voteResultsConfirmed.value)
     return QuestionStates.waitingForVoteConfirmation;
 
   // Proposal can be made if it has not been made already and user confirmed vote results.
-  if (!proposalEvent && voteResultsConfirmed)
+  if (!activeProposal && voteResultsConfirmed)
     return QuestionStates.waitingForProposal;
 
   // Proposal can be deleted if it has been rejected.
