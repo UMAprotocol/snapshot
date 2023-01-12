@@ -205,6 +205,8 @@ export const getModuleDetailsUma = async (
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
 
+  console.log('execution events matching proposal hash:', executionEvents);
+
   const proposalExecuted = executionEvents.length > 0;
 
   return {
