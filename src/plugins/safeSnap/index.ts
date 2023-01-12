@@ -278,12 +278,14 @@ export default class Plugin {
     explanation: string,
     transactions: any
   ) {
+    const explanationBytes = toUtf8Bytes(explanation);
+    console.log('explanationBytes:', explanationBytes);
     const tx = await sendTransaction(
       web3,
       moduleAddress,
       UMA_MODULE_ABI,
       'proposeTransactions',
-      [transactions, '0x']
+      [transactions, explanationBytes]
       // [[["0xB8034521BB1a343D556e5005680B3F17FFc74BeD", 0, "0", "0x"]], '0x']
     );
     yield;
