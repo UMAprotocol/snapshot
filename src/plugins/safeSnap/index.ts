@@ -271,13 +271,18 @@ export default class Plugin {
     console.log('[DAO module] submitted proposal:', receipt);
   }
 
-  async *submitProposal(web3: any, moduleAddress: string, transactions: any) {
+  async *submitProposal(
+    web3: any,
+    moduleAddress: string,
+    explanation: string,
+    transactions: any
+  ) {
     const tx = await sendTransaction(
       web3,
       moduleAddress,
       UMA_MODULE_ABI,
       'proposeTransactions',
-      [transactions, '0x']
+      [transactions, explanation]
       // [[["0xB8034521BB1a343D556e5005680B3F17FFc74BeD", 0, "0", "0x"]], '0x']
     );
     yield;

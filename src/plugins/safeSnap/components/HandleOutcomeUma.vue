@@ -167,6 +167,7 @@ const submitProposal = async () => {
     const proposalSubmission = plugin.submitProposal(
       getInstance().web3,
       props.umaAddress,
+      props.ipfs,
       getTransactions()
     );
     await proposalSubmission.next();
