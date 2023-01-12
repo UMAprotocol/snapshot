@@ -144,8 +144,7 @@ export const getModuleDetailsUma = async (
   );
 
   const thisModuleProposalEvents = proposalEvents.filter(
-    event => event.args?.ancillaryData === ancillaryData /*&&
-      event.args?.timestamp == currentProposalHashTimestamp*/
+    event => event.args?.ancillaryData === ancillaryData
   );
 
   // Get the full proposal events (with state and disputer).
@@ -183,7 +182,10 @@ export const getModuleDetailsUma = async (
 
   // Check for execution events matching the Snapshot proposal hash.
   const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.ProposalExecuted(proposalHash)
+    moduleContract.filters.ProposalExecuted(
+      proposalHash,
+      thisModuleFullProposalEvents[0].proposalTime
+    )
   );
 
   const proposalExecuted = executionEvents.length > 0;
