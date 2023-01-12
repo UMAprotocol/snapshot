@@ -8,7 +8,7 @@ import { useWeb3 } from '@/composables';
 import { keccak256 } from '@ethersproject/keccak256';
 import { pack } from '@ethersproject/solidity';
 import { defaultAbiCoder } from '@ethersproject/abi';
-import { toUtf8Bytes } from '@ethersproject/strings';
+import { toUtf8Bytes, toUtf8String } from '@ethersproject/strings';
 
 const getBondDetails = async (
   provider: StaticJsonRpcProvider,
@@ -190,7 +190,7 @@ export const getModuleDetailsUma = async (
 
   const thisProposalTransactionsProposedEvents =
     transactionsProposedEvents.filter(
-      event => event.args?.explanation === toUtf8Bytes(explanation)
+      event => toUtf8String(event.args?.explanation) === explanation
     );
 
   console.log('explanation:', explanation);
