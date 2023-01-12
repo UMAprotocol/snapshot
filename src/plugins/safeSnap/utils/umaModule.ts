@@ -133,12 +133,12 @@ export const getModuleDetailsUma = async (
     };
   }
   // Check for active proposals
-  const proposalHashTimestamp = BigNumber.from(
-    await moduleContract.proposalHashes(proposalHash)
+  const proposalHashTimestamp = await moduleContract.proposalHashes(
+    proposalHash
   );
   console.log('proposal hash timestamp:', proposalHashTimestamp);
 
-  const activeProposal = proposalHashTimestamp.isZero;
+  const activeProposal = proposalHashTimestamp > 0;
   console.log('active proposal?', activeProposal);
 
   // Search for requests with matching ancillary data
@@ -241,7 +241,7 @@ export const getModuleDetailsUma = async (
     userBalance: bondDetails.currentUserBalance,
     needsBondApproval: needsApproval,
     noTransactions: false,
-    activeProposal: activeProposal(),
+    activeProposal: activeProposal,
     proposalEvent: thisModuleFullProposalEvents[0],
     proposalExecuted: proposalExecuted
   };
