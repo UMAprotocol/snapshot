@@ -1,6 +1,7 @@
 import { Result } from '@ethersproject/abi';
 import { isAddress } from '@ethersproject/address';
 import { isHexString } from '@ethersproject/bytes';
+import { toUtf8Bytes } from '@ethersproject/strings';
 import { Contract } from '@ethersproject/contracts';
 import { BigNumber } from '@ethersproject/bignumber';
 import { _TypedDataEncoder } from '@ethersproject/hash';
@@ -282,7 +283,7 @@ export default class Plugin {
       moduleAddress,
       UMA_MODULE_ABI,
       'proposeTransactions',
-      [transactions, explanation]
+      [transactions, toUtf8Bytes(explanation)]
       // [[["0xB8034521BB1a343D556e5005680B3F17FFc74BeD", 0, "0", "0x"]], '0x']
     );
     yield;
