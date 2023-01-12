@@ -202,9 +202,10 @@ export const getModuleDetailsUma = async (
 
   const thisProposalTransactionsProposedEvents =
     transactionsProposedEvents.filter(
-      event => event.args?.explanation === toUtf8Bytes(explanation)
+      event => event.args?.explanation === explanation
     );
 
+  console.log('explanation:', explanation);
   console.log('transactions proposed:', thisProposalTransactionsProposedEvents);
 
   const executionEvents = await moduleContract.queryFilter(
