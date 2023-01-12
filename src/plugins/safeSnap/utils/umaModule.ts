@@ -149,7 +149,7 @@ export const getModuleDetailsUma = async (
       event.args?.timestamp == currentProposalHashTimestamp
   );
 
-  // Get the full proposal event (with state and disputer).
+  // Get the full proposal events (with state and disputer).
   const proposalEvent = await Promise.all(
     thisModuleCurrentProposalEvent.map(event => {
       return oracleContract
@@ -175,7 +175,8 @@ export const getModuleDetailsUma = async (
             isDisputed: isDisputed,
             isSettled: result.settled,
             resolvedPrice: result.resolvedPrice,
-            proposalHash: proposalHash
+            proposalHash: proposalHash,
+            proposalTime: result.timestamp
           };
         });
     })
@@ -183,7 +184,10 @@ export const getModuleDetailsUma = async (
 
   // Check for execution events matching the Snapshot proposal hash.
   const executionEvents = await moduleContract.queryFilter(
-    moduleContract.filters.ProposalExecuted(proposalHash)
+    moduleContract.filters.ProposalExecuted(
+      proposalHash,
+      proposalEvent[0].proposalTime
+    )
   );
 
   // Check if execution event matches this specific Snapshot proposal's IPFS CID.
@@ -191,7 +195,9 @@ export const getModuleDetailsUma = async (
     .queryFilter(moduleContract.filters.TransactionsProposed())
     .then(result => {
       return result.filter(
-        event => event.args?.explanation === toUtf8Bytes(explanation)
+        event =>
+          event.args?.explanation === toUtf8Bytes(explanation) &&
+          event.args?.proposalHash === proposalHash
       );
     });
 
