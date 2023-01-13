@@ -92,7 +92,6 @@ export const getModuleDetailsUma = async (
 
   // Create ancillary data for proposal hash
   let ancillaryData = '';
-  let currentProposalHashTimestamp = 0;
   let proposalHash;
   if (transactions !== undefined) {
     proposalHash = keccak256(
@@ -109,9 +108,6 @@ export const getModuleDetailsUma = async (
         pack(['string', 'string'], ['proposalHash', ':']),
         toUtf8Bytes(proposalHash.replace('0x', ''))
       ]
-    );
-    currentProposalHashTimestamp = await moduleContract.proposalHashes(
-      proposalHash
     );
   } else {
     return {
@@ -182,8 +178,7 @@ export const getModuleDetailsUma = async (
             isDisputed: isDisputed,
             isSettled: result.settled,
             resolvedPrice: result.resolvedPrice,
-            proposalHash: proposalHash,
-            proposalTime: result.timestamp
+            proposalHash: proposalHash
           };
         });
     })
