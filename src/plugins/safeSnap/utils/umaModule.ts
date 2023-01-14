@@ -198,16 +198,9 @@ export const getModuleDetailsUma = async (
     moduleContract.filters.ProposalExecuted(proposalHash)
   );
 
-  const proposalTimes: any = [];
-  const executionTimes: any = [];
+  const proposalTimes = thisProposalTransactionsProposedEvents.map(tx => tx.args?.proposalTime.toString());
 
-  thisProposalTransactionsProposedEvents.forEach(tx =>
-    proposalTimes.push(tx.args?.proposalTime.toString())
-  );
-
-  executionEvents.forEach(tx =>
-    executionTimes.push(tx.args?.proposalTime.toString())
-  );
+  const executionTimes = executionEvents.map(tx => tx.args?.proposalTime.toString());
 
   const proposalExecuted = proposalTimes.some(time =>
     executionTimes.includes(time)
