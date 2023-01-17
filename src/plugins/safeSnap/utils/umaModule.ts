@@ -82,7 +82,7 @@ export const getModuleDetailsUma = async (
   let needsApproval = false;
   const minimumBond = moduleDetails[3][0];
   const optimisticOracle = moduleDetails[1][0];
-  const validPrice = moduleDetails[5][0].toString();
+  const validResponse = moduleDetails[5][0].toString();
   const bondDetails = await getBondDetails(provider, moduleAddress);
 
   if (
@@ -157,7 +157,7 @@ export const getModuleDetailsUma = async (
   // Get the full proposal events (with state and disputer).
   const thisModuleFullProposalEvent = await Promise.all(
     thisModuleProposalEvent.map(async event => {
-      const settledPriceCheck = await oracleContract.callStatic
+      const settledPriceResponse = await oracleContract.callStatic
         .settleAndGetPrice(
           event.args?.identifier,
           event.args?.timestamp,
@@ -184,8 +184,9 @@ export const getModuleDetailsUma = async (
             Math.floor(Date.now() / 1000) >=
             Number(event.args?.expirationTimestamp);
 
-          const isRejectable =
-            settledPriceCheck !== undefined && settledPriceCheck !== validPrice
+          const isRejected =
+            settledPriceResponse !== undefined &&
+            settledPriceResponse !== validResponse
               ? true
               : false;
 
@@ -193,7 +194,7 @@ export const getModuleDetailsUma = async (
             expirationTimestamp: event.args?.expirationTimestamp,
             isExpired: isExpired,
             isDisputed: isDisputed,
-            isRejectable: isRejectable,
+            isRejectable: isRejected,
             isSettled: result.settled,
             resolvedPrice: result.resolvedPrice,
             proposalHash: proposalHash
