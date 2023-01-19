@@ -157,16 +157,6 @@ export const getModuleDetailsUma = async (
   // Get the full proposal events (with state and disputer).
   const thisModuleFullProposalEvent = await Promise.all(
     thisModuleProposalEvent.map(async event => {
-      const settledPriceResponse = await oracleContract.callStatic
-        .settleAndGetPrice(
-          event.args?.identifier,
-          event.args?.timestamp,
-          event.args?.ancillaryData,
-          { from: event.args?.requester }
-        )
-        .then(price => price.toString())
-        .catch(() => undefined);
-
       return oracleContract
         .getRequest(
           event.args?.requester,
@@ -189,7 +179,6 @@ export const getModuleDetailsUma = async (
             isExpired: isExpired,
             isDisputed: isDisputed,
             isSettled: result.settled,
-            resolvedPrice: result.resolvedPrice,
             proposalHash: proposalHash
           };
         });
