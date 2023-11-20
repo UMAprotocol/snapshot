@@ -76,7 +76,7 @@ function enrichTransactionForDisplay(transaction: Transaction) {
       <div class="flex flex-col items-center gap-3 md:flex-row">
         <SafeLinkWithAvatar class="flex-2" :safe="safe" />
         <ExternalLink class="flex-1" v-if="ipfs" :link="ipfs">
-          View transactions on IPFS
+          View on IPFS
         </ExternalLink>
       </div>
       <div class="divider mx-auto h-[1px] w-full bg-skin-border" />
