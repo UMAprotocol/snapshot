@@ -79,7 +79,7 @@ function enrichTransactionForDisplay(transaction: Transaction) {
           View transactions on IPFS
         </ExternalLink>
       </div>
-      <div class="divider mx-auto h-[1px] w-[95%] bg-skin-border" />
+      <div class="divider mx-auto h-[1px] w-full bg-skin-border" />
       <div
         v-for="({ type, ...details }, index) in transactionsForDisplay"
         class="flex flex-col gap-2"
