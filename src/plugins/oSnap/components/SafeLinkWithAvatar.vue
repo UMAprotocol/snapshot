@@ -13,9 +13,7 @@ const safeLink = computed(() =>
   getSafeAppLink(props.safe.network, props.safe.safeAddress)
 );
 const networkLogo = networks[props.safe.network].logo;
-console.info('networkLogo', networkLogo);
 const networkLogoUrl = getIpfsUrl(networkLogo) as string;
-console.info('networkLogoUrl', networkLogo);
 </script>
 
 <template>
