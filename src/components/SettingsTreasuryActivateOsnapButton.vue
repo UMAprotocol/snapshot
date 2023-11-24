@@ -25,9 +25,7 @@ const inactiveStyles = computed(() => {
     v-if="isOsnapEnabled"
     class="flex items-center gap-2 rounded-full px-3 py-2 bg-primary text-white"
   >
-    <span
-      :class="['block h-[6px] w-[6px] rounded-full bg-[hsla(122,100%,45%,1)]']"
-    />oSnap activated
+    <span class="block h-[6px] w-[6px] rounded-full bg-green" />oSnap activated
   </button>
   <button
     v-else
