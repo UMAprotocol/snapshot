@@ -32,10 +32,6 @@ defineEmits<{
         :disabled="legacyOsnap.enabled"
         @update:modelValue="$emit('toggleShouldUseOsnap')"
       />
-      <label for="toggleOsnap">
-        Yes, use oSnap for transactions (this will restrict voting type to
-        Basic).
-      </label>
     </div>
   </div>
 </template>
