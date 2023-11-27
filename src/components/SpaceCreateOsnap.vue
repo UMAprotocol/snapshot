@@ -26,12 +26,11 @@ defineEmits<{
         organizations Safe will execute if approved? (Remember, oSnap enables
         trustless and permissionless execution)
       </p>
-      <input
-        id="toggleOsnap"
-        type="checkbox"
-        :checked="shouldUseOsnap"
+      <TuneSwitch
+        :model-value="shouldUseOsnap"
+        label="Yes, use oSnap for transactions (this will restrict voting type to Basic)."
         :disabled="legacyOsnap.enabled"
-        @change="$emit('toggleShouldUseOsnap')"
+        @update:modelValue="$emit('toggleShouldUseOsnap')"
       />
       <label for="toggleOsnap">
         Yes, use oSnap for transactions (this will restrict voting type to
