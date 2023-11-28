@@ -2,7 +2,7 @@
   <a
     :href="'https://uma.xyz/osnap'"
     target="_blank"
-    class="group text-skin-text hover:text-skin-link hover:shadow-lg text-sm border border-skin-border px-3 py-2 rounded-lg"
+    class="group bg-skin-bg text-skin-text hover:text-skin-link hover:shadow-lg hover:border-skin-text text-sm border border-skin-border px-3 py-1 rounded-lg"
     rel="noopener noreferrer"
   >
     Powered by
