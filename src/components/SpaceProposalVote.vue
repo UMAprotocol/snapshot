@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Proposal, Choice } from '@/helpers/interfaces';
 import voting from '@snapshot-labs/snapshot.js/src/voting';
-import OsnapMarketingWidget from '@/plugins/oSnap/components/OsnapMarketingWidget.vue';
 
 const props = defineProps<{
   proposal: Proposal;
@@ -35,10 +34,6 @@ const validatedUserChoice = computed(() => {
   return null;
 });
 
-const hasOsnapPlugin = computed(() => {
-  return Object.keys(props.proposal.plugins).includes('oSnap');
-});
-
 function emitChoice(c) {
   emit('update:modelValue', c);
 }
@@ -52,10 +47,6 @@ watch(validatedUserChoice, () => {
 
 <template>
   <BaseBlock class="mb-4 relative" :title="$t('proposal.castVote')">
-    <OsnapMarketingWidget
-      v-if="hasOsnapPlugin"
-      class="absolute top-[-16px] right-[16px]"
-    />
     <div class="mb-3">
       <SpaceProposalVoteSingleChoice
         v-if="proposal.type === 'single-choice' || proposal.type === 'basic'"
