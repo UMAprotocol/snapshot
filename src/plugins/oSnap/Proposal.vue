@@ -6,6 +6,7 @@ import { formatEther, formatUnits } from '@ethersproject/units';
 import HandleOutcome from './components/HandleOutcome/HandleOutcome.vue';
 import ReadOnly from './components/Input/ReadOnly.vue';
 import SafeLinkWithAvatar from './components/SafeLinkWithAvatar.vue';
+import OsnapMarketingWidget from './components/OsnapMarketingWidget.vue';
 import { GnosisSafe, Transaction } from './types';
 
 const keyOrder = [

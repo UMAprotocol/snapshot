@@ -19,6 +19,7 @@ import {
   getIsOsnapEnabled,
   getModuleAddressForTreasury
 } from './utils';
+import OsnapMarketingWidget from './components/OsnapMarketingWidget.vue';
 
 const props = defineProps<{
   space: ExtendedSpace;
