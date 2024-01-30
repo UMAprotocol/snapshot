@@ -289,6 +289,7 @@ onMounted(async () => {
             :collectables="collectables"
             :network="newPluginData.safe.network"
             :transactions="newPluginData.safe.transactions"
+            :safe="newPluginData.safe"
             @add-transaction="addTransaction"
             @remove-transaction="removeTransaction"
             @update-transaction="updateTransaction"
