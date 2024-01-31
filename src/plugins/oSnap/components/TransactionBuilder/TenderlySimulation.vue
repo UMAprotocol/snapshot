@@ -163,6 +163,7 @@ async function simulate() {
           >
         </div>
         <a
+          v-if="simulationState.simulationLink.public"
           target="_blank"
           class="flex items-center gap-1 text-inherit hover:underline"
           :href="simulationState.simulationLink.url"
@@ -170,6 +171,7 @@ async function simulate() {
           <span>View on Tenderly</span>
           <IHoExternalLink class="text-inherit inline w-[1.2em] h-[1.2em]" />
         </a>
+        <div v-else class="text-inherit">Simulation not public</div>
       </div>
 
       <TuneButton
@@ -177,25 +179,21 @@ async function simulate() {
         :tooltip="'Reset Simulation'"
         @click="resetState"
       >
-        Reset
+        Reset Simulation
         <IHoRefresh class="text-inherit w-[1em] h-[1em]" />
       </TuneButton>
-      <div
-        class="flex flex-col w-full items-start text-left"
-        v-if="simulationState.exceedsGasSubsidy"
-      >
-        <p class="text-sm">
-          <strong class="text-skins text-base text-red">Warning:</strong>
-          This transaction will
-          <strong class="underline"
-            >not be automatically executed by oSnap.</strong
-          >
-          This transaction used
-          {{ simulationState.gasUsed.toLocaleString() }} gas, which exceeds
-          oSnap's maximum subsidized amount of
-          {{ OSNAP_GAS_SUBSIDY.toLocaleString() }}.
-        </p>
-      </div>
+
+      <p v-if="simulationState.exceedsGasSubsidy" class="text-sm text-left">
+        <strong class="text-skins text-base text-red">Warning:</strong>
+        This transaction will
+        <strong class="underline"
+          >not be automatically executed by oSnap.</strong
+        >
+        This transaction used
+        {{ simulationState.gasUsed.toLocaleString() }} gas, which exceeds
+        oSnap's maximum subsidized amount of
+        {{ OSNAP_GAS_SUBSIDY.toLocaleString() }}.
+      </p>
     </div>
   </div>
 </template>
