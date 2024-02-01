@@ -8,6 +8,7 @@ import ReadOnly from './components/Input/ReadOnly.vue';
 import SafeLinkWithAvatar from './components/SafeLinkWithAvatar.vue';
 import { GnosisSafe, Transaction } from './types';
 import OsnapMarketingWidget from './components/OsnapMarketingWidget.vue';
+import TenderlySimulation from './components/TransactionBuilder/TenderlySimulation.vue';
 
 const keyOrder = [
   'to',
@@ -59,9 +60,11 @@ function enrichTransactionForDisplay(transaction: Transaction) {
       ...commonProperties,
       type: 'Contract interaction',
       'method name': method.name,
-      ...Object.fromEntries(method.inputs.map((input,i)=>{
-        return [`${input.name} (param ${i+1}): `,parameters[i]]
-      }))
+      ...Object.fromEntries(
+        method.inputs.map((input, i) => {
+          return [`${input.name} (param ${i + 1}): `, parameters[i]];
+        })
+      )
     };
   }
   if (transaction.type === 'transferFunds') {
@@ -119,6 +122,12 @@ function enrichTransactionForDisplay(transaction: Transaction) {
           <span class="break-all">{{ value }}</span>
         </ReadOnly>
       </div>
+
+      <TenderlySimulation
+        :transactions="safe.transactions"
+        :safe="safe"
+        :network="safe.network"
+      />
 
       <HandleOutcome
         v-if="!!results"
