@@ -14,11 +14,12 @@ import {
   Transaction
 } from './types';
 import {
+  allTransactionsValid,
   getGnosisSafeBalances,
   getGnosisSafeCollectibles,
   getIsOsnapEnabled,
   getModuleAddressForTreasury,
-  validateTransaction
+  validateOsnapTransaction
 } from './utils';
 import OsnapMarketingWidget from './components/OsnapMarketingWidget.vue';
 
@@ -44,14 +45,14 @@ const safes = ref<GnosisSafe[]>([]);
 const tokens = ref<Token[]>([]);
 const collectables = ref<NFT[]>([]);
 
-const transactionsValid = ref(false);
-
 function addTransaction(transaction: Transaction) {
   if (newPluginData.value.safe === null) return;
-  newPluginData.value.safe.transactions.push({
-    ...transaction,
-    isValid: validateTransaction(transaction)
-  });
+  newPluginData.value.safe.transactions.push(
+    validateOsnapTransaction(transaction)
+  );
+  newPluginData.value.safe.isValid = allTransactionsValid(
+    newPluginData.value.safe.transactions
+  );
   update(newPluginData.value);
 }
 
@@ -63,11 +64,11 @@ function removeTransaction(transactionIndex: number) {
 
 function updateTransaction(transaction: Transaction, transactionIndex: number) {
   if (!newPluginData.value.safe) return;
-  newPluginData.value.safe.transactions[transactionIndex] = {
-    ...transaction,
-    isValid: validateTransaction(transaction)
-  };
-
+  newPluginData.value.safe.transactions[transactionIndex] =
+    validateOsnapTransaction(transaction);
+  newPluginData.value.safe.isValid = allTransactionsValid(
+    newPluginData.value.safe.transactions
+  );
   update(newPluginData.value);
 }
 
@@ -233,25 +234,6 @@ onMounted(async () => {
   );
   update(newPluginData.value);
   isLoading.value = false;
-});
-
-watch(newPluginData, () => {
-  // validate form here, set isValid accordingly upstream
-  if (!newPluginData.value.safe) {
-    return;
-  }
-  // can't publish without transactions
-  if (newPluginData.value.safe.transactions.length === 0) {
-    transactionsValid.value = false;
-    return;
-  }
-  // check ALL transactions
-  if (newPluginData.value.safe.transactions.every(validateTransaction)) {
-    transactionsValid.value = false;
-    return;
-  }
-  // default to invalid
-  transactionsValid.value = false;
 });
 </script>
 

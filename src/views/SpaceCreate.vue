@@ -6,7 +6,6 @@ import Plugin from '@/plugins/safeSnap';
 import { getInstance } from '@snapshot-labs/lock/plugins/vue3';
 import { clone } from '@snapshot-labs/snapshot.js/src/utils';
 import proposalSchema from '@snapshot-labs/snapshot.js/src/schemas/proposal.json';
-import { validateTransaction } from '@/plugins/oSnap/utils';
 
 const safeSnapPlugin = new Plugin();
 
@@ -140,12 +139,8 @@ const isFormValid = computed(() => {
     ? form.value.metadata.plugins.safeSnap.valid
     : true;
 
-  const isOsnapPluginValid = form.value.metadata.plugins?.oSnap?.safe
-    ?.transactions
-    ? form.value.metadata.plugins.oSnap.safe.transactions.every(
-        validateTransaction
-      )
-    : true;
+  const isOsnapPluginValid =
+    form.value.metadata.plugins?.oSnap?.safe?.isValid ?? true;
 
   return (
     !web3.value.authLoading &&
