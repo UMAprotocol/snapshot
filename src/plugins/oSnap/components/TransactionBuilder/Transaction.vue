@@ -43,6 +43,14 @@ function updateTransaction(transaction: TTransaction) {
   newTransaction.value = transaction;
   emit('updateTransaction', newTransaction.value, props.transactionIndex);
 }
+
+function setTransactionAsInvalid() {
+  const tx: TTransaction = {
+    ...newTransaction.value,
+    isValid: false
+  };
+  emit('updateTransaction', tx, props.transactionIndex);
+}
 </script>
 
 <template>
@@ -66,6 +74,7 @@ function updateTransaction(transaction: TTransaction) {
       v-if="transaction.type === 'contractInteraction'"
       :transaction="newTransaction as ContractInteractionTransaction"
       :network="network"
+      :setTransactionAsInvalid="setTransactionAsInvalid"
       @update-transaction="updateTransaction"
     />
 
@@ -74,6 +83,7 @@ function updateTransaction(transaction: TTransaction) {
       :network="network"
       :tokens="tokens"
       :transaction="newTransaction as TransferFundsTransaction"
+      :setTransactionAsInvalid="setTransactionAsInvalid"
       @update-transaction="updateTransaction"
     />
 
@@ -83,12 +93,14 @@ function updateTransaction(transaction: TTransaction) {
       :safe-address="safeAddress"
       :collectables="collectables"
       :transaction="newTransaction as TransferNftTransaction"
+      :setTransactionAsInvalid="setTransactionAsInvalid"
       @update-transaction="updateTransaction"
     />
 
     <RawTransaction
       v-if="transaction.type === 'raw'"
       :transaction="newTransaction as TRawTransaction"
+      :setTransactionAsInvalid="setTransactionAsInvalid"
       @update-transaction="updateTransaction"
     />
   </div>
