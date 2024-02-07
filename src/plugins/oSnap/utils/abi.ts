@@ -6,6 +6,8 @@ import {
   mustBeEthereumAddress,
   mustBeEthereumContractAddress
 } from './validators';
+import { isErrorWithMessage } from '../types';
+import { fetchImplementationAddress } from './getters';
 
 /**
  * Checks if the `parameter` of a contract method `method` takes an array or tuple as input, based on the `baseType` of the parameter.
@@ -70,6 +72,89 @@ export async function getContractABI(
     console.error('Failed to retrieve ABI', e);
     return '';
   }
+}
+
+export type AbiResult =
+  | {
+      success: true;
+      isProxy: true;
+      proxyAbi: string;
+      implementationAbi: string;
+    }
+  | {
+      success: true;
+      isProxy: false;
+      abi: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+const usdcUpgradeable = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+
+export async function fetchProxyAndImplementationAbis(
+  network: string,
+  contractAddress: string = usdcUpgradeable // for testing
+): Promise<AbiResult> {
+  try {
+    const abi = await getContractABI(network, contractAddress);
+    if (!abi) {
+      throw new Error('unable to fetch ABI');
+    }
+    if (!isProxyContract(abi)) {
+      return {
+        success: true,
+        isProxy: false,
+        abi
+      };
+    }
+    const implementationAddress = await fetchImplementationAddress(
+      abi,
+      contractAddress,
+      network
+    );
+
+    if (!implementationAddress) {
+      throw new Error('Failed to fetch implementation address');
+    }
+
+    const implementationAbi = await getContractABI(
+      network,
+      implementationAddress
+    );
+
+    if (!implementationAbi) {
+      throw new Error('failed to fetch implementation ABI');
+    }
+
+    return {
+      success: true,
+      isProxy: true,
+      proxyAbi: abi,
+      implementationAbi
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: isErrorWithMessage(error)
+        ? error.message
+        : "Failed to fetch ABI's for this address"
+    };
+  }
+}
+
+function isProxyContract(abi: string): boolean {
+  const contract = new Interface(abi);
+  if (
+    contract.fragments.find(
+      fragment =>
+        fragment.type === 'function' && fragment.name === 'implementation'
+    )
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /**

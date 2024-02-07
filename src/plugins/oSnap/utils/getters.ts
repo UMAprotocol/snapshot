@@ -753,3 +753,17 @@ export function getOracleUiLink(
   }
   return `https://testnet.oracle.uma.xyz?transactionHash=${txHash}&eventIndex=${logIndex}`;
 }
+
+export async function fetchImplementationAddress(
+  abi: string,
+  proxyAddress: string,
+  network: string
+): Promise<string | undefined> {
+  try {
+    const provider = getProvider(network);
+    const proxyContract = new Contract(proxyAddress, abi, provider);
+    return (await proxyContract.implementation()) as string;
+  } catch {
+    return undefined;
+  }
+}
