@@ -93,7 +93,7 @@ const debouncedUpdateAddress = useDebounceFn(() => {
   if (isAddress(to.value)) {
     fetchABIs();
   }
-}, 1000);
+}, 300);
 
 async function fetchABIs() {
   const result = await fetchProxyAndImplementationAbis(props.network, to.value);
