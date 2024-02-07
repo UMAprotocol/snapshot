@@ -91,11 +91,14 @@ export type AbiResult =
       error: string;
     };
 
-const usdcUpgradeable = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
-
+/**
+ * Attempts to fetch ABIs at a particular address, from a block explorer.
+ *
+ * Checks if the contract is a proxy contract, and if so, returns both
+ */
 export async function fetchProxyAndImplementationAbis(
   network: string,
-  contractAddress: string = usdcUpgradeable // for testing
+  contractAddress: string
 ): Promise<AbiResult> {
   try {
     const abi = await getContractABI(network, contractAddress);
@@ -118,12 +121,10 @@ export async function fetchProxyAndImplementationAbis(
     if (!implementationAddress) {
       throw new Error('Failed to fetch implementation address');
     }
-
     const implementationAbi = await getContractABI(
       network,
       implementationAddress
     );
-
     if (!implementationAbi) {
       throw new Error('failed to fetch implementation ABI');
     }
@@ -144,6 +145,11 @@ export async function fetchProxyAndImplementationAbis(
   }
 }
 
+/**
+ * Checks an ABI statically to see if it is a proxy contract.
+ *
+ * This is very rudimentary, it only checks if the contract has a function called "implementation"
+ */
 function isProxyContract(abi: string): boolean {
   const contract = new Interface(abi);
   if (

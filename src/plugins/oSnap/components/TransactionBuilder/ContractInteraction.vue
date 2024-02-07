@@ -2,12 +2,14 @@
 import { parseAmount } from '@/helpers/utils';
 import { FunctionFragment } from '@ethersproject/abi';
 import { isAddress } from '@ethersproject/address';
+import { useDebounceFn } from '@vueuse/core';
 
 import { ContractInteractionTransaction, Network } from '../../types';
 import {
+  AbiResult,
   createContractInteractionTransaction,
+  fetchProxyAndImplementationAbis,
   getABIWriteFunctions,
-  getContractABI,
   validateTransaction
 } from '../../utils';
 import AddressInput from '../Input/Address.vue';
@@ -26,7 +28,9 @@ const to = ref(props.transaction.to ?? '');
 const isToValid = computed(() => {
   return to.value === '' || isAddress(to.value);
 });
-const abi = ref(props.transaction.abi ?? '');
+const abi = ref<Extract<AbiResult, { success: true }> | undefined>();
+const selectedAbi = ref<string | undefined>();
+
 const isAbiValid = ref(true);
 const value = ref(props.transaction.value ?? '0');
 const isValueValid = ref(true);
@@ -40,12 +44,12 @@ const selectedMethod = computed(
 const parameters = ref<string[]>([]);
 
 function updateTransaction() {
-  if (!isValueValid || !isToValid || !isAbiValid) return;
+  if (!isValueValid || !isToValid || !isAbiValid || !selectedAbi.value) return;
   try {
     const transaction = createContractInteractionTransaction({
       to: to.value,
       value: value.value,
-      abi: abi.value,
+      abi: selectedAbi.value,
       method: selectedMethod.value,
       parameters: parameters.value
     });
@@ -55,7 +59,7 @@ function updateTransaction() {
       return;
     }
   } catch (error) {
-    console.warn('ContractInteraction - Invalid Transaction:',error);
+    console.warn('ContractInteraction - Invalid Transaction:', error);
   }
 }
 
@@ -71,11 +75,11 @@ function updateMethod(methodName: string) {
 }
 
 function updateAbi(newAbi: string) {
-  abi.value = newAbi;
+  selectedAbi.value = newAbi;
   methods.value = [];
 
   try {
-    methods.value = getABIWriteFunctions(abi.value);
+    methods.value = getABIWriteFunctions(selectedAbi.value);
     isAbiValid.value = true;
     updateMethod(methods.value[0].name);
   } catch (error) {
@@ -85,12 +89,21 @@ function updateAbi(newAbi: string) {
   updateTransaction();
 }
 
-async function updateAddress() {
-  const result = await getContractABI(props.network, to.value);
-  if (result && result !== abi.value) {
-    updateAbi(result);
+const debouncedUpdateAddress = useDebounceFn(() => {
+  if (isAddress(to.value)) {
+    fetchABIs();
   }
-  updateTransaction();
+}, 1000);
+
+async function fetchABIs() {
+  const result = await fetchProxyAndImplementationAbis(props.network, to.value);
+  if (result.success) {
+    abi.value = result;
+    // defaults to implementation if proxy
+    abi.value?.isProxy
+      ? updateAbi(abi.value.implementationAbi)
+      : updateAbi(abi.value.abi);
+  }
 }
 
 function updateValue(newValue: string) {
@@ -110,7 +123,7 @@ function updateValue(newValue: string) {
     <AddressInput
       v-model="to"
       :label="$t('safeSnap.to')"
-      @update:model-value="updateAddress()"
+      @update:model-value="debouncedUpdateAddress()"
     />
 
     <UiInput
@@ -121,9 +134,20 @@ function updateValue(newValue: string) {
       <template #label>{{ $t('safeSnap.value') }}</template>
     </UiInput>
 
+    <UiSelect
+      v-if="abi?.success && abi.isProxy"
+      v-model="selectedAbi"
+      @change="updateAbi($event)"
+    >
+      <template #label>Choose ABI</template>
+      <option :value="abi.implementationAbi">Write Contract</option>
+      <option :value="abi.proxyAbi">Write Proxy</option>
+    </UiSelect>
+
     <UiInput
+      v-if="!abi?.success"
       :error="!isAbiValid && $t('safeSnap.invalidAbi')"
-      :model-value="abi"
+      :model-value="selectedAbi"
       @update:model-value="updateAbi($event)"
     >
       <template #label>ABI</template>
