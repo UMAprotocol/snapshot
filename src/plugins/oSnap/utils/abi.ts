@@ -14,7 +14,7 @@ import { fetchImplementationAddress } from './getters';
  *
  * If this is the case, we must parse the value as JSON and verify that it is valid.
  */
-export function isArrayParameter(parameter: string): boolean {
+export async function isArrayParameter(parameter: string): Promise<boolean> {
   return ['tuple', 'array'].includes(parameter);
 }
 
@@ -72,95 +72,6 @@ export async function getContractABI(
     console.error('Failed to retrieve ABI', e);
     return '';
   }
-}
-
-export type AbiResult =
-  | {
-      success: true;
-      isProxy: true;
-      proxyAbi: string;
-      implementationAbi: string;
-    }
-  | {
-      success: true;
-      isProxy: false;
-      abi: string;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-/**
- * Attempts to fetch ABIs at a particular address, from a block explorer.
- *
- * Checks if the contract is a proxy contract, and if so, returns both
- */
-export async function fetchProxyAndImplementationAbis(
-  network: string,
-  contractAddress: string
-): Promise<AbiResult> {
-  try {
-    const abi = await getContractABI(network, contractAddress);
-    if (!abi) {
-      throw new Error('unable to fetch ABI');
-    }
-    if (!isProxyContract(abi)) {
-      return {
-        success: true,
-        isProxy: false,
-        abi
-      };
-    }
-    const implementationAddress = await fetchImplementationAddress(
-      abi,
-      contractAddress,
-      network
-    );
-
-    if (!implementationAddress) {
-      throw new Error('Failed to fetch implementation address');
-    }
-    const implementationAbi = await getContractABI(
-      network,
-      implementationAddress
-    );
-    if (!implementationAbi) {
-      throw new Error('failed to fetch implementation ABI');
-    }
-
-    return {
-      success: true,
-      isProxy: true,
-      proxyAbi: abi,
-      implementationAbi
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: isErrorWithMessage(error)
-        ? error.message
-        : "Failed to fetch ABI's for this address"
-    };
-  }
-}
-
-/**
- * Checks an ABI statically to see if it is a proxy contract.
- *
- * This is very rudimentary, it only checks if the contract has a function called "implementation"
- */
-function isProxyContract(abi: string): boolean {
-  const contract = new Interface(abi);
-  if (
-    contract.fragments.find(
-      fragment =>
-        fragment.type === 'function' && fragment.name === 'implementation'
-    )
-  ) {
-    return true;
-  }
-  return false;
 }
 
 /**

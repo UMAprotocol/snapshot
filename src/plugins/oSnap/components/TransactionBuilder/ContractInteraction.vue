@@ -6,10 +6,10 @@ import { useDebounceFn } from '@vueuse/core';
 
 import { ContractInteractionTransaction, Network } from '../../types';
 import {
-  AbiResult,
   createContractInteractionTransaction,
-  fetchProxyAndImplementationAbis,
+  fetchImplementationAddress,
   getABIWriteFunctions,
+  getContractABI,
   validateTransaction
 } from '../../utils';
 import AddressInput from '../Input/Address.vue';
@@ -28,8 +28,9 @@ const to = ref(props.transaction.to ?? '');
 const isToValid = computed(() => {
   return to.value === '' || isAddress(to.value);
 });
-const abi = ref<Extract<AbiResult, { success: true }> | undefined>();
-const selectedAbi = ref<string | undefined>();
+const abi = ref('');
+const implementationAddress = ref('');
+const showAbiChoiceModal = ref(false);
 
 const isAbiValid = ref(true);
 const value = ref(props.transaction.value ?? '0');
@@ -44,12 +45,12 @@ const selectedMethod = computed(
 const parameters = ref<string[]>([]);
 
 function updateTransaction() {
-  if (!isValueValid || !isToValid || !isAbiValid || !selectedAbi.value) return;
+  if (!isValueValid || !isToValid || !isAbiValid || !abi.value) return;
   try {
     const transaction = createContractInteractionTransaction({
       to: to.value,
       value: value.value,
-      abi: selectedAbi.value,
+      abi: abi.value,
       method: selectedMethod.value,
       parameters: parameters.value
     });
@@ -75,11 +76,11 @@ function updateMethod(methodName: string) {
 }
 
 function updateAbi(newAbi: string) {
-  selectedAbi.value = newAbi;
+  abi.value = newAbi;
   methods.value = [];
 
   try {
-    methods.value = getABIWriteFunctions(selectedAbi.value);
+    methods.value = getABIWriteFunctions(abi.value);
     isAbiValid.value = true;
     updateMethod(methods.value[0].name);
   } catch (error) {
@@ -91,18 +92,52 @@ function updateAbi(newAbi: string) {
 
 const debouncedUpdateAddress = useDebounceFn(() => {
   if (isAddress(to.value)) {
-    fetchABIs();
+    fetchABI();
   }
 }, 300);
 
-async function fetchABIs() {
-  const result = await fetchProxyAndImplementationAbis(props.network, to.value);
-  if (result.success) {
-    abi.value = result;
-    // defaults to implementation if proxy
-    abi.value?.isProxy
-      ? updateAbi(abi.value.implementationAbi)
-      : updateAbi(abi.value.abi);
+async function handleUseProxyAbi() {
+  showAbiChoiceModal.value = false;
+  try {
+    const res = await getContractABI(props.network, to.value);
+    if (res) {
+      updateAbi(res);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function handleUseImplementationAbi() {
+  showAbiChoiceModal.value = false;
+  try {
+    if (!implementationAddress.value) {
+      throw new Error(' No Implementation address');
+    }
+    const res = await getContractABI(
+      props.network,
+      implementationAddress.value
+    );
+    if (res) {
+      updateAbi(res);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function fetchABI() {
+  try {
+    const res = await fetchImplementationAddress(to.value, props.network);
+    if (!res) {
+      handleUseProxyAbi();
+      return;
+    }
+    // if proxy, let user decide which ABI we should fetch
+    implementationAddress.value = res;
+    showAbiChoiceModal.value = true;
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -134,20 +169,9 @@ function updateValue(newValue: string) {
       <template #label>{{ $t('safeSnap.value') }}</template>
     </UiInput>
 
-    <UiSelect
-      v-if="abi?.success && abi.isProxy"
-      v-model="selectedAbi"
-      @change="updateAbi($event)"
-    >
-      <template #label>Choose ABI</template>
-      <option :value="abi.implementationAbi">Write Contract</option>
-      <option :value="abi.proxyAbi">Write Proxy</option>
-    </UiSelect>
-
     <UiInput
-      v-if="!abi?.success"
       :error="!isAbiValid && $t('safeSnap.invalidAbi')"
-      :model-value="selectedAbi"
+      :model-value="abi"
       @update:model-value="updateAbi($event)"
     >
       <template #label>ABI</template>
@@ -174,4 +198,22 @@ function updateValue(newValue: string) {
       </div>
     </div>
   </div>
+
+  <BaseModal :open="showAbiChoiceModal" @close="showAbiChoiceModal = false">
+    <template #header>
+      <h3 class="text-left px-3">Use Implementation ABI?</h3>
+    </template>
+    <div class="flex flex-col gap-4 p-3">
+      <p class="pr-8">
+        This contract looks like a proxy. Would you like to use the
+        implementation ABI?
+      </p>
+      <div class="flex gap-2 justify-center">
+        <TuneButton @click="handleUseProxyAbi"> Keep proxy ABI </TuneButton>
+        <TuneButton @click="handleUseImplementationAbi">
+          Use Implementation ABI
+        </TuneButton>
+      </div>
+    </div>
+  </BaseModal>
 </template>

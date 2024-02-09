@@ -9,6 +9,7 @@ import { toUtf8Bytes } from '@ethersproject/strings';
 import { multicall } from '@snapshot-labs/snapshot.js/src/utils';
 import getProvider from '@snapshot-labs/snapshot.js/src/utils/provider';
 import memoize from 'lodash/memoize';
+import detectProxyTarget from 'evm-proxy-detection';
 import {
   ERC20_ABI,
   GNOSIS_SAFE_TRANSACTION_API_URLS,
@@ -755,15 +756,14 @@ export function getOracleUiLink(
 }
 
 export async function fetchImplementationAddress(
-  abi: string,
   proxyAddress: string,
   network: string
 ): Promise<string | undefined> {
   try {
     const provider = getProvider(network);
-    const proxyContract = new Contract(proxyAddress, abi, provider);
-    return (await proxyContract.implementation()) as string;
-  } catch {
-    return undefined;
+    const requestFunc = ({ method, params }) => provider.send(method, params);
+    return (await detectProxyTarget(proxyAddress, requestFunc)) ?? undefined;
+  } catch (error) {
+    console.error(error);
   }
 }
