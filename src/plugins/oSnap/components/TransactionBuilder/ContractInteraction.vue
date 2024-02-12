@@ -4,7 +4,7 @@ import { FunctionFragment } from '@ethersproject/abi';
 import { isAddress } from '@ethersproject/address';
 import { useDebounceFn } from '@vueuse/core';
 
-import { ContractInteractionTransaction, Network } from '../../types';
+import { ContractInteractionTransaction, Network, Status } from '../../types';
 import {
   createContractInteractionTransaction,
   fetchImplementationAddress,
@@ -14,6 +14,7 @@ import {
 } from '../../utils';
 import AddressInput from '../Input/Address.vue';
 import MethodParameterInput from '../Input/MethodParameter.vue';
+import { sleep } from '@snapshot-labs/snapshot.js/src/utils';
 
 const props = defineProps<{
   network: Network;
@@ -29,6 +30,7 @@ const isToValid = computed(() => {
   return to.value === '' || isAddress(to.value);
 });
 const abi = ref('');
+const abiFetchStatus = ref<Status>(Status.IDLE);
 const implementationAddress = ref('');
 const showAbiChoiceModal = ref(false);
 
@@ -64,6 +66,14 @@ function updateTransaction() {
   }
 }
 
+async function handleFail() {
+  abiFetchStatus.value = Status.FAIL;
+  await sleep(3000);
+  if (abiFetchStatus.value === Status.FAIL) {
+    abiFetchStatus.value = Status.IDLE;
+  }
+}
+
 function updateParameter(index: number, value: string) {
   parameters.value[index] = value;
   updateTransaction();
@@ -84,7 +94,7 @@ function updateAbi(newAbi: string) {
     isAbiValid.value = true;
     updateMethod(methods.value[0].name);
   } catch (error) {
-    isAbiValid.value = false;
+    handleFail();
     console.warn('error extracting useful methods', error);
   }
   updateTransaction();
@@ -100,10 +110,13 @@ async function handleUseProxyAbi() {
   showAbiChoiceModal.value = false;
   try {
     const res = await getContractABI(props.network, to.value);
-    if (res) {
-      updateAbi(res);
+    if (!res) {
+      throw new Error('Failed to fetch ABI.');
     }
+    updateAbi(res);
+    abiFetchStatus.value = Status.SUCCESS;
   } catch (error) {
+    handleFail();
     console.error(error);
   }
 }
@@ -118,16 +131,20 @@ async function handleUseImplementationAbi() {
       props.network,
       implementationAddress.value
     );
-    if (res) {
-      updateAbi(res);
+    if (!res) {
+      throw new Error('Failed to fetch ABI.');
     }
+    abiFetchStatus.value = Status.SUCCESS;
+    updateAbi(res);
   } catch (error) {
+    handleFail();
     console.error(error);
   }
 }
 
 async function fetchABI() {
   try {
+    abiFetchStatus.value = Status.LOADING;
     const res = await fetchImplementationAddress(to.value, props.network);
     if (!res) {
       handleUseProxyAbi();
@@ -137,6 +154,7 @@ async function fetchABI() {
     implementationAddress.value = res;
     showAbiChoiceModal.value = true;
   } catch (error) {
+    handleFail();
     console.error(error);
   }
 }
@@ -151,6 +169,11 @@ function updateValue(newValue: string) {
   }
   updateTransaction();
 }
+
+function handleDismissModal() {
+  abiFetchStatus.value = Status.IDLE;
+  showAbiChoiceModal.value = false;
+}
 </script>
 
 <template>
@@ -158,6 +181,7 @@ function updateValue(newValue: string) {
     <AddressInput
       v-model="to"
       :label="$t('safeSnap.to')"
+      :disabled="abiFetchStatus === Status.LOADING"
       @update:model-value="debouncedUpdateAddress()"
     />
 
@@ -170,12 +194,28 @@ function updateValue(newValue: string) {
     </UiInput>
 
     <UiInput
+      :disabled="abiFetchStatus === Status.LOADING"
       :error="!isAbiValid && $t('safeSnap.invalidAbi')"
       :model-value="abi"
       @update:model-value="updateAbi($event)"
     >
       <template #label>ABI</template>
     </UiInput>
+    <div
+      v-if="abiFetchStatus === Status.LOADING"
+      class="flex items-center justify-start gap-2 p-2"
+    >
+      <LoadingSpinner />
+      <p>Fetching ABI...</p>
+    </div>
+
+    <div
+      v-if="abiFetchStatus === Status.FAIL"
+      class="flex items-center justify-start gap-2 p-2 text-red"
+    >
+      <BaseIcon name="warning" class="text-inherit" />
+      <p>Failed to fetch ABI</p>
+    </div>
 
     <div v-if="methods.length">
       <UiSelect v-model="selectedMethodName" @change="updateMethod($event)">
@@ -199,7 +239,7 @@ function updateValue(newValue: string) {
     </div>
   </div>
 
-  <BaseModal :open="showAbiChoiceModal" @close="showAbiChoiceModal = false">
+  <BaseModal :open="showAbiChoiceModal" @close="handleDismissModal">
     <template #header>
       <h3 class="text-left px-3">Use Implementation ABI?</h3>
     </template>
