@@ -35,7 +35,7 @@ import {
   TransactionsProposedEvent
 } from '../types';
 import { getPagedEvents } from './events';
-import { getAddress } from '@ethersproject/address';
+import { toChecksumAddress } from '@/helpers/utils';
 
 /**
  * Calls the Gnosis Safe Transaction API
@@ -56,7 +56,7 @@ async function callGnosisSafeTransactionApi<TResult = any>(
  */
 export const getGnosisSafeBalances = memoize(
   (network: Network, safeAddress: string) => {
-    const checksumAddress = getAddress(safeAddress);
+    const checksumAddress = toChecksumAddress(safeAddress);
     const endpointPath = `/v1/safes/${checksumAddress}/balances?exclude_spam=true`;
     return callGnosisSafeTransactionApi<Partial<BalanceResponse>[]>(
       network,
