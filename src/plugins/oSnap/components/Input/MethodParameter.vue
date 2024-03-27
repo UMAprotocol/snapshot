@@ -8,6 +8,7 @@ import { hexZeroPad, isBytesLike } from '@ethersproject/bytes';
 const props = defineProps<{
   parameter: ParamType;
   value: string;
+  validateOnMount?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -37,8 +38,28 @@ const inputType = computed(() => {
 
 const label = `${props.parameter.name} (${props.parameter.type})`;
 const arrayPlaceholder = `E.g. ["text", 123, 0x123]`;
+const newValue = ref(props.value);
 
-const isInputValid = computed(() => {
+const validationState = ref(true);
+const isInputValid = computed(() => validationState.value);
+
+const validationErrorMessage = ref<string>();
+const errorMessageForDisplay = computed(() => {
+  if (!isInputValid.value) {
+    return validationErrorMessage.value
+      ? validationErrorMessage.value
+      : `Invalid ${props.parameter.baseType}`;
+  }
+});
+
+const allowQuickFixForBytes32 = computed(() => {
+  if (!errorMessageForDisplay?.value?.includes('long')) {
+    return true;
+  }
+  return false;
+});
+
+function validate() {
   if (!isDirty.value) return true;
   if (isAddressInput.value) return isAddress(newValue.value);
   if (isArrayInput.value) return validateArrayInput(newValue.value);
@@ -46,9 +67,7 @@ const isInputValid = computed(() => {
   if (isBytes32Input.value) return validateBytes32Input(newValue.value);
   if (isBytesInput.value) return validateBytesInput(newValue.value);
   return true;
-});
-
-const newValue = ref(props.value);
+}
 
 watch(props.parameter, () => {
   newValue.value = '';
@@ -56,6 +75,11 @@ watch(props.parameter, () => {
 });
 
 watch(newValue, () => {
+  const valid = validate();
+  if (valid) {
+    validationErrorMessage.value = undefined;
+  }
+  validationState.value = valid;
   emit('updateParameterValue', newValue.value);
 });
 
@@ -67,12 +91,25 @@ function validateBytesInput(value: string) {
   return isBytesLike(value);
 }
 
+// provide better feedback/validation messages for bytes32 inputs
 function validateBytes32Input(value: string) {
   try {
-    if (value.slice(2).length > 64) {
-      throw new Error('String too long');
+    const data = value?.slice(2) || '';
+
+    if (data.length < 64) {
+      validationErrorMessage.value = 'Value too short';
+      throw new Error('Less than 32 bytes');
     }
-    return isBytesLike(value);
+
+    if (!isBytesLike(value)) {
+      throw new Error('Invalid bytes32');
+    }
+
+    if (data.length > 64) {
+      validationErrorMessage.value = 'Value too long';
+      throw new Error('More than 32 bytes');
+    }
+    return true;
   } catch {
     return false;
   }
@@ -103,6 +140,12 @@ function formatBytes32() {
     newValue.value = hexZeroPad(newValue.value, 32);
   }
 }
+onMounted(() => {
+  if (props.validateOnMount) {
+    isDirty.value = true;
+  }
+  validationState.value = validate();
+});
 </script>
 
 <template>
@@ -125,7 +168,7 @@ function formatBytes32() {
   <UiInput
     v-if="inputType === 'array'"
     :placeholder="arrayPlaceholder"
-    :error="!isInputValid && `Invalid ${parameter.baseType}`"
+    :error="errorMessageForDisplay"
     :model-value="value"
     @update:model-value="onChange($event)"
   >
@@ -134,7 +177,7 @@ function formatBytes32() {
   <UiInput
     v-if="inputType === 'number'"
     placeholder="123456"
-    :error="!isInputValid && `Invalid ${parameter.baseType}`"
+    :error="errorMessageForDisplay"
     :model-value="value"
     @update:model-value="onChange($event)"
   >
@@ -143,7 +186,7 @@ function formatBytes32() {
   <UiInput
     v-if="inputType === 'bytes'"
     placeholder="0x123abc"
-    :error="!isInputValid && `Invalid ${parameter.baseType}`"
+    :error="errorMessageForDisplay"
     :model-value="value"
     @update:model-value="onChange($event)"
   >
@@ -152,8 +195,9 @@ function formatBytes32() {
   <UiInput
     v-if="inputType === 'bytes32'"
     placeholder="0x123abc"
-    :error="!isInputValid && `Invalid ${parameter.baseType}`"
+    :error="errorMessageForDisplay"
     :model-value="value"
+    :quick-fix="allowQuickFixForBytes32 ? formatBytes32 : undefined"
     @blur="formatBytes32"
     @update:model-value="onChange($event)"
   >

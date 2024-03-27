@@ -7,9 +7,10 @@ import {
   RawTransaction,
   Token,
   TransferFundsTransaction,
-  TransferNftTransaction
+  TransferNftTransaction,
+  SafeImportTransaction
 } from '../types';
-import { encodeMethodAndParams } from './abi';
+import { encodeMethodAndParams, encodeSafeMethodAndParams } from './abi';
 
 /**
  * Creates a formatted transaction for the Optimistic Governor to execute
@@ -165,4 +166,62 @@ export function parseValueInput(input: string) {
     return parseAmount('0');
   }
   return parseAmount(input);
+}
+
+export function createSafeImportTransaction(
+  params: SafeImportTransaction
+): SafeImportTransaction {
+  const abi = JSON.stringify(Array(params.method));
+  // is native transfer funds
+  if (!params.method) {
+    const data = '0x';
+    const formatted = createFormattedOptimisticGovernorTransaction({
+      to: params.to,
+      value: params.value,
+      data
+    });
+    return {
+      ...params,
+      isValid: true,
+      abi,
+      formatted,
+      data
+    };
+  }
+  // is contract interaction with NO args
+  if (!params.parameters) {
+    const data = params?.data || '0x';
+    const formatted = createFormattedOptimisticGovernorTransaction({
+      to: params.to,
+      value: params.value,
+      data
+    });
+    return {
+      ...params,
+      isValid: true,
+      abi,
+      formatted,
+      data
+    };
+  }
+
+  // is contract interaction WITH args
+  const encodedData =
+    params?.data ||
+    encodeSafeMethodAndParams(params.method, params.parameters) ||
+    '0x';
+
+  const formatted = createFormattedOptimisticGovernorTransaction({
+    to: params.to,
+    value: params.value,
+    data: encodedData
+  });
+
+  return {
+    ...params,
+    isValid: true,
+    abi,
+    formatted,
+    data: encodedData
+  };
 }
