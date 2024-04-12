@@ -6,7 +6,8 @@ import {
   InputTypes,
   validateArrayInput,
   validateInput,
-  validateTupleInput
+  validateTupleInput,
+  isBytesLikeSafe
 } from '../../utils';
 
 const props = defineProps<{
@@ -124,7 +125,7 @@ const errorMessageForDisplay = computed(() => {
 });
 
 const allowQuickFixForBytes32 = computed(() => {
-  if (!errorMessageForDisplay?.value?.includes('long')) {
+  if (errorMessageForDisplay?.value?.includes('short')) {
     return true;
   }
   return false;
@@ -159,16 +160,21 @@ watch(newValue, () => {
 watch(newValue, value => {
   if (isBytes32Input.value && !isArrayInput.value) {
     const data = value?.slice(2) || '';
+
     if (data.length < 64) {
-      validationErrorMessage.value = 'bytes32 too short';
-      return;
+      const padded = hexZeroPad(value, 32);
+      if (isBytesLikeSafe(padded)) {
+        validationErrorMessage.value = 'bytes32 too short';
+        return;
+      }
     }
 
     if (data.length > 64) {
       validationErrorMessage.value = 'bytes32 too long';
       return;
     }
-    validationErrorMessage.value = '';
+
+    validationErrorMessage.value = undefined;
   }
 });
 
