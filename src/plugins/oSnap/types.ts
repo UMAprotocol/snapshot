@@ -80,6 +80,8 @@ export type Transaction =
   | TransferNftTransaction
   | TransferFundsTransaction
   | SafeImportTransaction;
+  | TransferFundsTransaction
+  | SafeImportTransaction;
 
 /**
  * Represents the fields that all transactions share.
