@@ -119,6 +119,14 @@ export function amountPositive(amount: string, decimals = 18) {
   }
 }
 
+export function isBytesLikeSafe(value: string): boolean {
+  try {
+    return isBytesLike(value);
+  } catch {
+    return false;
+  }
+}
+
 export function allTransactionsValid(transactions: Transaction[]): boolean {
   return transactions.every(tx => tx.isValid === true);
 }
