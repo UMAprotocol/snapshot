@@ -204,3 +204,36 @@ export function toChecksumAddress(address: string) {
 export function addressEqual(address1: string, address2: string) {
   return address1.toLowerCase() === address2.toLowerCase();
 }
+
+export function objectFromEntriesSorted<T extends object>(
+  obj: T,
+  keyOrder: string[]
+) {
+  // set as array first to preserve the correct order
+  let entries = Object.entries(obj);
+  const sorted: Array<[string, T[keyof T]]> = [];
+
+  keyOrder.forEach(key => {
+    if (obj.hasOwnProperty(key)) {
+      sorted.push([key, obj[key]]);
+      entries = entries.filter(item => item[0] !== key);
+    }
+  });
+  // ensure we don't filter out any items we didn't explicitly sort
+  return [...sorted, ...entries];
+}
+
+export function pickFromObject<T extends object, K extends keyof T>(
+  obj: T,
+  keys: K[]
+): Pick<T, K> {
+  const picked: Partial<T> = {};
+
+  keys.forEach(key => {
+    if (obj.hasOwnProperty(key)) {
+      picked[key] = obj[key];
+    }
+  });
+
+  return picked as Pick<T, K>;
+}
