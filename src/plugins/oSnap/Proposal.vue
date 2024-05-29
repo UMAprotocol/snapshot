@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ExtendedSpace, Proposal, Results } from '@/helpers/interfaces';
-import { getIpfsUrl } from '@/helpers/utils';
+import { objectFromEntriesSorted, pickFromObject } from '@/helpers/utils';
 import { isBigNumberish } from '@ethersproject/bignumber/lib/bignumber';
 import { formatEther, formatUnits } from '@ethersproject/units';
 import HandleOutcome from './components/HandleOutcome/HandleOutcome.vue';
@@ -11,36 +11,14 @@ import OsnapMarketingWidget from './components/OsnapMarketingWidget.vue';
 import TenderlySimulation from './components/TransactionBuilder/TenderlySimulation.vue';
 import BotSupportWarning from './components/BotSupportWarning.vue';
 
-const keyOrder = [
-  'to',
-  'recipient',
-  'amount',
-  'value',
-  'token symbol',
-  'token address'
-];
-
-const objectFromEntriesSorted = (obj: Object) => {
-  // set as array first to the correct preserve order
-  let entries = Object.entries(obj);
-  let sorted: Array<[string, any]> = [];
-
-  keyOrder.forEach(key => {
-    if (obj.hasOwnProperty(key)) {
-      sorted.push([key, obj[key]]);
-      entries = entries.filter(item => item[0] !== key);
-    }
-  });
-  // ensure we don't filter out any items we didn't explicitly sort
-  return [...sorted, ...entries];
-};
+const keyOrder = ['to', 'recipient', 'amount', 'value', 'token', 'data'];
 
 const props = defineProps<{
   space: ExtendedSpace;
   proposal: Proposal;
   results: Results;
 }>();
-const ipfs = getIpfsUrl(props.proposal.ipfs) as string;
+
 const safe = props.proposal.plugins.oSnap?.safe as GnosisSafe;
 const transactionsForDisplay = enrichTransactionsForDisplay(safe.transactions);
 
@@ -52,6 +30,7 @@ function enrichTransactionsForDisplay(transactions: Transaction[]) {
 function enrichTransactionForDisplay(transaction: Transaction) {
   const { to, value, data } = transaction;
   const commonProperties = { to, value: formatEther(value), data };
+
   if (transaction.type === 'raw') {
     return { ...commonProperties, type: 'Raw' };
   }
@@ -74,13 +53,23 @@ function enrichTransactionForDisplay(transaction: Transaction) {
       isBigNumberish(unformattedAmount) && !!token?.decimals
         ? formatUnits(unformattedAmount, token.decimals)
         : unformattedAmount;
+
+    const isNativeTransfer = token?.address === 'main';
+
+    if (isNativeTransfer) {
+      return {
+        ...pickFromObject(commonProperties, ['data']), // "to" & "value" redundant
+        recipient: commonProperties.to,
+        type: 'Transfer funds',
+        token: `Native token (${token.symbol})`,
+        amount
+      };
+    }
     return {
-      ...commonProperties,
-      type: 'Transfer funds',
-      'token address':
-        token?.address === 'main' ? 'native token' : token?.address,
-      'token symbol': token?.symbol,
+      ...pickFromObject(commonProperties, ['data', 'to']),
       recipient: transaction.recipient,
+      type: 'Transfer funds',
+      token: `${token?.name} token (${token?.symbol})`,
       amount
     };
   }
@@ -121,7 +110,9 @@ function enrichTransactionForDisplay(transaction: Transaction) {
       >
         <h4 class="mb-2">Transaction #{{ index + 1 }} — {{ type }}</h4>
 
-        <ReadOnly v-for="[key, value] in objectFromEntriesSorted(details)">
+        <ReadOnly
+          v-for="[key, value] in objectFromEntriesSorted(details, keyOrder)"
+        >
           <strong
             class="mr-2 inline-block whitespace-nowrap first-letter:capitalize"
             >{{ key }}</strong
